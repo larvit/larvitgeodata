@@ -1,0 +1,37 @@
+{
+  "name": "larvitgeodata",
+  "version": "0.1.0",
+  "dependencies": {
+    "async": "^1.5.2",
+    "cheerio": "^0.19.0",
+    "larvitdb": "^0.4.4",
+    "larvitdbmigration": "^0.3.3",
+    "winston": "^2.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^1.10.3"
+  },
+  "description": "Geo data, primarily ISO territories, languages etc. Data fetched mostly from CLDR.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/larvit/larvitgeodata.git"
+  },
+  "keywords": [
+    "geo",
+    "territories",
+    "territory",
+    "language",
+    "languages",
+    "cldr"
+  ],
+  "author": "lilleman <lilleman@larvit.se>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/larvit/larvitgeodata/issues"
+  },
+  "homepage": "https://github.com/larvit/larvitgeodata#readme"
+}
