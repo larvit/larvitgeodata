@@ -6,51 +6,68 @@ var cheerio = require('cheerio'),
     db      = require('larvitdb');
 
 exports = module.exports = function(cb) {
-	var dbFields,
+	var dbIso3To2 = {},
+	    dbIso2To3 = {},
+	    tasks     = [],
 	    files,
-	    sql,
 	    i;
 
-	files = fs.readdirSync(__dirname + '/../cldrData/common/main');
+	// Fetch all database languages
+	tasks.push(function(cb) {
+		db.query('SELECT iso639_3, iso639_1 FROM geo_langs', function(err, rows) {
+			var i;
 
-	// Make sure all language files exists in the database
-	sql      = 'INSERT IGNORE INTO geo_languages VALUES';
-	dbFields = [];
-	for (i = 0; files[i] !== undefined; i ++) {
-		sql += '(?),';
-		dbFields.push(files[i].substring(0, files[i].length - 4));
-	}
-	sql = sql.substring(0, sql.length - 1) + ';';
+			if (err) {
+				cb(err);
+				return;
+			}
 
-	db.query(sql, dbFields, function(err) {
-		var tasks = [],
+			for (i = 0; rows[i] !== undefined; i ++) {
+				dbIso3To2[rows[i].iso639_3] = rows[i].iso639_1;
+				dbIso2To3[rows[i].iso639_1] = rows[i].iso639_3;
+			}
+
+			cb();
+		});
+	});
+
+	// Insert language display names
+	tasks.push(function(cb) {
+		var dbFields = [],
+		    sql      = 'INSERT INTO geo_langLabels VALUES',
+		    labelLang,
 		    lang,
 		    $;
 
-		if (err) {
-			cb(err);
-			return;
-		}
-
-		function addSqlTask(sql, dbFields) {
-			tasks.push(function(cb) {
-				db.query(sql, dbFields, cb);
-			});
-		}
+		files = fs.readdirSync(__dirname + '/../cldrData/common/main');
 
 		for (i = 0; files[i] !== undefined; i ++) {
-			lang = files[i].substring(0, files[i].length - 4);
+			$    = cheerio.load(fs.readFileSync(__dirname + '/../cldrData/common/main/' + files[i]), {'xmlMode': true});
+			labelLang = files[i].substring(0, files[i].length - 4);
 
-			$ = cheerio.load(fs.readFileSync(__dirname + '/../cldrData/common/main/' + files[i]), {'xmlMode': true});
+			if (labelLang.length === 2 && dbIso2To3[labelLang] !== undefined)
+				labelLang = dbIso2To3[labelLang];
 
 			$('ldml > localeDisplayNames > languages > language').each(function() {
-				addSqlTask('INSERT IGNORE INTO geo_languages VALUES(?),(?);', [lang, $(this).attr('type')]);
 				if ( ! $(this).attr('alt')) {
-					addSqlTask('INSERT IGNORE INTO geo_languageNames VALUES(?,?,?);', [$(this).attr('type'), lang, $(this).text()]);
+					lang = $(this).attr('type');
+
+					if (lang.length === 2 && dbIso2To3[lang] !== undefined)
+						lang = dbIso2To3[lang];
+
+					if (dbIso3To2[labelLang] !== undefined && dbIso3To2[lang] !== undefined) {
+						sql += '(?,?,?),';
+						dbFields.push(lang);
+						dbFields.push(labelLang);
+						dbFields.push($(this).text());
+					}
 				}
 			});
 		}
 
-		async.series(tasks, cb);
+		sql = sql.substring(0, sql.length - 1);
+		db.query(sql, dbFields, cb);
 	});
+
+	async.series(tasks, cb);
 };

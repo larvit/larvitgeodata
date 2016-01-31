@@ -5,7 +5,7 @@
     "async": "^1.5.2",
     "cheerio": "^0.19.0",
     "larvitdb": "^0.4.4",
-    "larvitdbmigration": "^0.3.3",
+    "larvitdbmigration": "^0.3.4",
     "winston": "^2.1.1"
   },
   "devDependencies": {
