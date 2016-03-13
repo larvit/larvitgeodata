@@ -5,9 +5,9 @@ CHANGE `iso3166_1_alpha_2` `iso3166_1_alpha_2` char(2) COLLATE 'ascii_general_ci
 DROP TABLE `geo_territoryLabels`;
 CREATE TABLE `geo_territoryLabels` (
   `terIso3166_1_alpha_2` char(2) CHARACTER SET ascii NOT NULL,
-  `labelIso639_3` char(2) CHARACTER SET ascii NOT NULL,
+  `labelIso639_3` char(3) CHARACTER SET ascii NOT NULL,
   `label` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `labelShort` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `labelShort` varchar(50) COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`terIso3166_1_alpha_2`,`labelIso639_3`),
   KEY `labelIso639_3` (`labelIso639_3`),
   CONSTRAINT `geo_territoryLabels_ibfk_1` FOREIGN KEY (`terIso3166_1_alpha_2`) REFERENCES `geo_territories` (`iso3166_1_alpha_2`),

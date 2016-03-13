@@ -9,7 +9,7 @@ const assert = require('assert'),
 // Set up winston
 log.remove(log.transports.Console);
 log.add(log.transports.Console, {
-	'level': 'info',
+	'level': 'warn',
 	'colorize': true,
 	'timestamp': true,
 	'json': false
@@ -22,7 +22,7 @@ describe('Basic (takes long time to build database)', function() {
 		var confFile;
 
 		// Let this test take some time
-		this.timeout(30000);
+		this.timeout(60000);
 		this.slow(3000);
 
 		// Check for empty db
@@ -85,7 +85,7 @@ describe('Basic (takes long time to build database)', function() {
 	// Tear down the database
 	after(function(done) {
 		const sqlTasks = [];
-
+done();return;
 		sqlTasks.push(function(cb) {
 			db.query('DROP TABLE geo_territoryLabels', cb);
 		});
@@ -157,13 +157,13 @@ describe('Basic (takes long time to build database)', function() {
 		});
 	});
 
-	/*it('Check for Swedish territory label', function(done) {
-		db.query('SELECT * FROM geo_territoryLabels WHERE langIso639_3 = \'swe\' AND labelIso639_3 = \'swe\'', function(err, rows) {
+	it('Check for Swedish territory label', function(done) {
+		db.query('SELECT * FROM geo_territoryLabels WHERE labelIso639_3 = \'swe\' AND terIso3166_1_alpha_2 = \'SE\'', function(err, rows) {
 			assert( ! err, 'err should be negative');
-			assert(rows.length === 1, 'There should be exactly one row');
-			assert(rows[0].label === 'svenska', 'The correct label should be "svenska", but is "' + rows[0].label + '"');
+			assert.deepEqual(rows.length, 1);
+			assert(rows[0].label === 'Sverige', 'The correct label should be "Sverige", but is "' + rows[0].label + '"');
 
 			done();
 		});
-	});*/
+	});
 });
