@@ -1,10 +1,11 @@
 'use strict';
 
-var log          = require('winston'),
-    events       = require('events'),
-    dbmigration  = require('larvitdbmigration')({'tableName': 'geo_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
-    eventEmitter = new events.EventEmitter(),
-    dbChecked    = false;
+const log          = require('winston'),
+      events       = require('events'),
+      dbmigration  = require('larvitdbmigration')({'tableName': 'geo_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
+      eventEmitter = new events.EventEmitter();
+
+var dbChecked = false;
 
 // Handle database migrations
 dbmigration(function(err) {
