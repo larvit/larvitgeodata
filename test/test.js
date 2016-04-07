@@ -9,10 +9,10 @@ const assert = require('assert'),
 // Set up winston
 log.remove(log.transports.Console);
 log.add(log.transports.Console, {
-	'level': 'warn',
-	'colorize': true,
+	'level':     'warn',
+	'colorize':  true,
 	'timestamp': true,
-	'json': false
+	'json':      false
 });
 
 describe('Basic (takes long time to build database)', function() {
@@ -84,57 +84,7 @@ describe('Basic (takes long time to build database)', function() {
 
 	// Tear down the database
 	after(function(done) {
-		const sqlTasks = [];
-done();return;
-		sqlTasks.push(function(cb) {
-			db.query('DROP TABLE geo_territoryLabels', cb);
-		});
-
-		sqlTasks.push(function(cb) {
-			db.query('DROP TABLE geo_regions_territory', cb);
-		});
-
-		sqlTasks.push(function(cb) {
-			db.query('DROP TABLE geo_regions_region', cb);
-		});
-
-		sqlTasks.push(function(cb) {
-			db.query('DROP TABLE geo_langLabels', cb);
-		});
-
-		sqlTasks.push(function(cb) {
-			db.query('DROP TABLE geo_langs', cb);
-		});
-
-		sqlTasks.push(function(cb) {
-			db.query('DROP TABLE geo_regions', cb);
-		});
-
-		sqlTasks.push(function(cb) {
-			db.query('DROP TABLE geo_territories', cb);
-		});
-
-		sqlTasks.push(function(cb) {
-			db.query('DROP TABLE geo_db_version', cb);
-		});
-
-		sqlTasks.push(function(cb) {
-			db.query('SHOW TABLES', function(err, rows) {
-				if (err) {
-					log.error(err);
-					process.exit(1);
-				}
-
-				if (rows.length) {
-					log.error('Database is not empty. Tables were not removed correctly. You must manually clean your test database.');
-					process.exit(1);
-				}
-
-				cb();
-			});
-		});
-
-		async.series(sqlTasks, done);
+		db.removeAllTables(done);
 	});
 
 	it('Check for Sweden', function(done) {
