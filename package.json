@@ -11,7 +11,7 @@
   "devDependencies": {
     "eslint": "^2.6.0",
     "mocha": "^2.4.5",
-    "pre-git": "^3.8.1",
+    "pre-git": "^3.8.1"
   },
   "description": "Geo data, primarily ISO territories, languages etc. Data fetched mostly from CLDR.",
   "main": "index.js",
