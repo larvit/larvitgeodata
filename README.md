@@ -3,8 +3,6 @@
 # larvitgeodata
 Node module for geo data, primarily ISO territories, languages etc
 
-Currently only reading into the database, no javascript interface.
-
 ## Installation
 
 ```bash
@@ -16,9 +14,38 @@ npm i larvitgeodata;
 In your start script file, run this:
 
 ```javascript
-var geo = require('larvitgeodata');
+const geo = require('larvitgeodata');
 
-geo(function() {
+geo.ready(function(err) {
 	// Database is full, do cool stuff with it.
+});
+```
+
+### Territories
+
+```javascript
+geo.getTerritories(function(err, result) {
+	// result:
+	// [{'iso3166_1_num': 4, 'iso3166_1_alpha_3': 'AFG', 'iso3166_1_alpha_2': 'AF', 'label': 'Afghanistan'},...]
+});
+```
+
+### Languages
+
+```javascript
+geo.getLanguages(function(err, result) {
+	// result:
+	// [{'iso639_3': 'aar', 'iso639_1': 'aa', 'type': 'living', 'scope': 'individual', 'label': 'Afar'},...]
+});
+```
+
+### Different label languages
+
+The lists can show labels on different languages, here are some examples:
+
+```javascript
+geo.getTerritories({'labelLang': 'swe'}, function(err, result) {
+	// result:
+	// [...,{'iso3166_1_num': 166, 'iso3166_1_alpha_3': 'CCK', 'iso3166_1_alpha_2': 'CC', 'label': 'Kokosöarna'},...]
 });
 ```

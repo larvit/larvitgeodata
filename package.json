@@ -1,16 +1,17 @@
 {
   "name": "larvitgeodata",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "dependencies": {
     "async": "^1.5.2",
     "cheerio": "^0.20.0",
     "larvitdb": "^1.0.0",
-    "larvitdbmigration": "^1.0.0",
-    "winston": "^2.1.1"
+    "larvitdbmigration": "^1.0.1",
+    "winston": "^2.2.0"
   },
   "devDependencies": {
-    "eslint": "^2.4",
-    "mocha": "^2.4.5"
+    "eslint": "^2.6.0",
+    "mocha": "^2.4.5",
+    "pre-git": "^3.8.1",
   },
   "description": "Geo data, primarily ISO territories, languages etc. Data fetched mostly from CLDR.",
   "main": "index.js",
@@ -36,5 +37,18 @@
   "bugs": {
     "url": "https://github.com/larvit/larvitgeodata/issues"
   },
-  "homepage": "https://github.com/larvit/larvitgeodata#readme"
+  "homepage": "https://github.com/larvit/larvitgeodata#readme",
+  "pre-commit": [
+    "npm test",
+    "eslint ./"
+  ],
+  "config": {
+    "pre-git": {
+      "commit-msg": [],
+      "pre-commit": [],
+      "pre-push": [],
+      "post-commit": [],
+      "post-merge": []
+    }
+  }
 }
