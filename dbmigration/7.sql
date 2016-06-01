@@ -1,0 +1,13 @@
+UPDATE `geo_territoryLabels` SET `labelShort` = 'C. African Rep.' WHERE `terIso3166_1_alpha_2` = 'CF' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Congo, Rep.' WHERE `terIso3166_1_alpha_2` = 'CG' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Congo, DRC' WHERE `terIso3166_1_alpha_2` = 'CD' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Czech Rep.' WHERE `terIso3166_1_alpha_2` = 'CZ' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Dominican Rep.' WHERE `terIso3166_1_alpha_2` = 'DO' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Equ. Guinea' WHERE `terIso3166_1_alpha_2` = 'GQ' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Faroe Is.' WHERE `terIso3166_1_alpha_2` = 'FO' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Falkland Is.' WHERE `terIso3166_1_alpha_2` = 'FK' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Papua New G.' WHERE `terIso3166_1_alpha_2` = 'PG' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Trinidad & T.' WHERE `terIso3166_1_alpha_2` = 'TT' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'UAE' WHERE `terIso3166_1_alpha_2` = 'AE' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'Macedonia' WHERE `terIso3166_1_alpha_2` = 'MK' AND `labelIso639_3` = 'eng';
+UPDATE `geo_territoryLabels` SET `labelShort` = 'USA' WHERE `terIso3166_1_alpha_2` = 'US' AND `labelIso639_3` = 'eng';
