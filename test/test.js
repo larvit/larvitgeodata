@@ -1,19 +1,19 @@
 'use strict';
 
-const assert = require('assert'),
-      log    = require('winston'),
-      db     = require('larvitdb'),
-      fs     = require('fs');
+const	assert	= require('assert'),
+	log	= require('winston'),
+	db	= require('larvitdb'),
+	fs	= require('fs');
 
 let geoData;
 
 // Set up winston
 log.remove(log.transports.Console);
 log.add(log.transports.Console, {
-	'level':     'warn',
-	'colorize':  true,
-	'timestamp': true,
-	'json':      false
+	'level':	'warn',
+	'colorize':	true,
+	'timestamp':	true,
+	'json':	false
 });
 
 // Make sure the database is set up
@@ -52,10 +52,11 @@ before(function(done) {
 		});
 	}
 
-	if (process.argv[3] === undefined)
+	if (process.argv[3] === undefined) {
 		confFile = __dirname + '/../config/db_test.json';
-	else
+	} else {
 		confFile = process.argv[3].split('=')[1];
+	}
 
 	log.verbose('DB config file: "' + confFile + '"');
 
@@ -66,11 +67,13 @@ before(function(done) {
 			log.info('Failed to find config file "' + confFile + '", retrying with "' + altConfFile + '"');
 
 			fs.stat(altConfFile, function(err) {
-				if (err)
+				if (err) {
 					assert( ! err, 'fs.stat failed: ' + err.message);
+				}
 
-				if ( ! err)
+				if ( ! err) {
 					runDbSetup(altConfFile);
+				}
 			});
 		} else {
 			runDbSetup(confFile);
@@ -200,7 +203,23 @@ describe('Language functions', function() {
 			assert.deepEqual(result[0].iso639_1, 'sv');
 			assert.deepEqual(result[0].label, 'Swedish');
 
-			geoData.labelLang = 'eng'; // Set it back to default, "eng"
+			done();
+		});
+	});
+
+	it('Get only swedish and english', function(done) {
+		geoData.getLanguages({'iso639_3': ['swe', 'eng']}, function(err, result) {
+			assert( ! err, 'err should be negative');
+
+			assert.deepEqual(result.length, 2);
+
+			assert.deepEqual(result[0].iso639_3, 'eng');
+			assert.deepEqual(result[0].iso639_1, 'en');
+			assert.deepEqual(result[0].label, 'English');
+
+			assert.deepEqual(result[1].iso639_3, 'swe');
+			assert.deepEqual(result[1].iso639_1, 'sv');
+			assert.deepEqual(result[1].label, 'Swedish');
 
 			done();
 		});

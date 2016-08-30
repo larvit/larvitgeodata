@@ -1,12 +1,12 @@
 'use strict';
 
-const db           = require('larvitdb'),
-      log          = require('winston'),
-      events       = require('events'),
-      dbmigration  = require('larvitdbmigration')({'tableName': 'geo_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
-      eventEmitter = new events.EventEmitter();
+const	events	= require('events'),
+	eventEmitter	= new events.EventEmitter(),
+	dbmigration	= require('larvitdbmigration')({'tableName': 'geo_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
+	log	= require('winston'),
+	db	= require('larvitdb');
 
-let dbChecked = false;
+let	dbChecked	= false;
 
 // What language to use for lables
 exports.labelLang = 'eng';
@@ -34,14 +34,22 @@ function getLanguages(options, cb) {
 	let sql;
 
 	if (typeof options === 'function') {
-		cb      = options;
-		options = {};
+		cb	= options;
+		options	= {};
 	}
 
-	if (options.gotIso639_1 === undefined) options.gotIso639_1 = true;
-	if (options.labelLang   === undefined) options.labelLang   = exports.labelLang;
-	if (options.scope       === undefined) options.scope       = 'individual';
-	if (options.type        === undefined) options.type        = 'living';
+	if (options.gotIso639_1	=== undefined) options.gotIso639_1	= true;
+	if (options.labelLang	=== undefined) options.labelLang	= exports.labelLang;
+	if (options.scope	=== undefined) options.scope	= 'individual';
+	if (options.type	=== undefined) options.type	= 'living';
+
+	if (options.iso639_3 !== undefined && ! (options.iso639_3 instanceof Array)) {
+		options.iso639_3 = [options.iso639_3];
+	}
+
+	if (options.iso639_1 !== undefined && ! (options.iso639_1 instanceof Array)) {
+		options.iso639_1 = [options.iso639_1];
+	}
 
 	sql = 'SELECT langs.*, labels.label FROM geo_langs langs LEFT JOIN geo_langLabels labels ON labels.langIso639_3 = langs.iso639_3 ';
 
@@ -69,13 +77,25 @@ function getLanguages(options, cb) {
 	}
 
 	if (options.iso639_1 !== undefined) {
-		sql += ' AND langs.iso639_1 = ?';
-		dbFields.push(options.iso639_1);
+		sql += ' AND langs.iso639_1 IN (';
+
+		for (let i = 0; options.iso639_1[i] !== undefined; i ++) {
+			sql += '?,';
+			dbFields.push(options.iso639_1[i]);
+		}
+
+		sql = sql.substring(0, sql.length - 1) + ')';
 	}
 
 	if (options.iso639_3 !== undefined) {
-		sql += ' AND langs.iso639_3 = ?';
-		dbFields.push(options.iso639_3);
+		sql += ' AND langs.iso639_3 IN (';
+
+		for (let i = 0; options.iso639_3[i] !== undefined; i ++) {
+			sql += '?,';
+			dbFields.push(options.iso639_3[i]);
+		}
+
+		sql = sql.substring(0, sql.length - 1) + ')';
 	}
 
 	sql += ' ORDER BY labels.label, langs.iso639_3';
@@ -97,8 +117,8 @@ function getTerritories(options, cb) {
 	let sql;
 
 	if (typeof options === 'function') {
-		cb      = options;
-		options = {};
+		cb	= options;
+		options	= {};
 	}
 
 	if (options.labelLang === undefined) {
@@ -145,7 +165,6 @@ function ready(cb) {
 	eventEmitter.on('checked', cb);
 }
 
-exports.getLanguages   = getLanguages;
-exports.getTerritories = getTerritories;
-exports.ready          = ready;
-
+exports.getLanguages	= getLanguages;
+exports.getTerritories	= getTerritories;
+exports.ready	= ready;

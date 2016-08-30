@@ -17,6 +17,7 @@ In your start script file, run this:
 const geo = require('larvitgeodata');
 
 geo.ready(function(err) {
+	if (err) throw err;
 	// Database is full, do cool stuff with it.
 });
 ```
@@ -25,6 +26,7 @@ geo.ready(function(err) {
 
 ```javascript
 geo.getTerritories(function(err, result) {
+	if (err) throw err;
 	// result:
 	// [{'iso3166_1_num': 4, 'iso3166_1_alpha_3': 'AFG', 'iso3166_1_alpha_2': 'AF', 'label': 'Afghanistan'},...]
 });
@@ -34,7 +36,8 @@ geo.getTerritories(function(err, result) {
 
 ```javascript
 geo.getLanguages(function(err, result) {
-	// result:
+	if (err) throw err;
+	// Example result:
 	// [{'iso639_3': 'aar', 'iso639_1': 'aa', 'type': 'living', 'scope': 'individual', 'label': 'Afar'},...]
 });
 ```
@@ -45,6 +48,7 @@ The lists can show labels on different languages, here are some examples:
 
 ```javascript
 geo.getTerritories({'labelLang': 'swe'}, function(err, result) {
+	if (err) throw err;
 	// result:
 	// [...,{'iso3166_1_num': 166, 'iso3166_1_alpha_3': 'CCK', 'iso3166_1_alpha_2': 'CC', 'label': 'Kokosöarna'},...]
 });
