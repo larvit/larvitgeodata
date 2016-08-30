@@ -134,19 +134,25 @@ function getTerritories(options, cb) {
 
 	sql += ' WHERE 1 = 1';
 
-	if (options.iso3166_1_num !== undefined) {
-		sql += ' AND territories.iso3166_1_num = ?';
-		dbFields.push(options.iso3166_1_num);
-	}
+	for (let key of ['iso3166_1_num', 'iso3166_1_alpha_2', 'iso3166_1_alpha_3']) {
+		if (options[key] === undefined) {
+			continue;
+		} else if ( ! (options[key] instanceof Array)) {
+			options[key] = [options[key]];
+		}
 
-	if (options.iso3166_1_alpha_3 !== undefined) {
-		sql += ' AND territories.iso3166_1_alpha_3 = ?';
-		dbFields.push(options.iso3166_1_alpha_3);
-	}
+		if (options[key].length === 0) {
+			sql += ' AND 1 = 2';
+			continue;
+		}
 
-	if (options.iso3166_1_alpha_2 !== undefined) {
-		sql += ' AND territories.iso3166_1_alpha_2 = ?';
-		dbFields.push(options.iso3166_1_alpha_2);
+		sql += ' AND territories.' + key + ' IN (';
+		for (let i = 0; options[key][i] !== undefined; i ++) {
+			sql += '?,';
+			dbFields.push(options[key][i]);
+		}
+
+		sql = sql.substring(0, sql.length - 1) + ')';
 	}
 
 	sql += ' ORDER BY labels.label, territories.iso3166_1_alpha_2';

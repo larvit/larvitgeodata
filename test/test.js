@@ -271,4 +271,24 @@ describe('Territory functions', function() {
 			done();
 		});
 	});
+
+	it('Get only Germany and Russia', function(done) {
+		geoData.getTerritories({'iso3166_1_alpha_2': ['DE', 'RU']}, function(err, result) {
+			assert( ! err, 'err should be negative');
+
+			assert.deepEqual(result.length, 2);
+
+			assert.deepEqual(result[0].iso3166_1_num, 276);
+			assert.deepEqual(result[0].iso3166_1_alpha_3, 'DEU');
+			assert.deepEqual(result[0].iso3166_1_alpha_2, 'DE');
+			assert.deepEqual(result[0].label, 'Germany');
+
+			assert.deepEqual(result[1].iso3166_1_num, 643);
+			assert.deepEqual(result[1].iso3166_1_alpha_3, 'RUS');
+			assert.deepEqual(result[1].iso3166_1_alpha_2, 'RU');
+			assert.deepEqual(result[1].label, 'Russia');
+
+			done();
+		});
+	});
 });
