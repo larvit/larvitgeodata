@@ -147,7 +147,7 @@ describe('Language functions', function() {
 		geoData.getLanguages({'type': false, 'scope': false, 'gotIso639_1': 'all'}, function(err, result) {
 			assert( ! err, 'err should be negative');
 
-			assert.deepEqual(result.length, 8367);
+			assert.deepEqual(result.length, 8368);
 
 			assert.deepEqual(result[0].iso639_3, 'aaa');
 			assert.deepEqual(result[0].iso639_1, null);
