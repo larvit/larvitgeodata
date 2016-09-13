@@ -4,7 +4,6 @@ INSERT INTO geo_langLabels VALUES("prs", "swe", "dari");
 INSERT INTO geo_langLabels VALUES("prs", "eng", "Dari");
 INSERT INTO geo_langLabels VALUES("cmn", "swe", "mandarin");
 INSERT INTO geo_langLabels VALUES("cmn", "eng", "Mandarin Chinese");
-INSERT INTO geo_langLabels VALUES("pus", "swe", "Pashto");
 INSERT INTO geo_langLabels VALUES("chi", "swe", "Kantonesiska");
 INSERT INTO geo_langLabels VALUES("chi", "eng", "Cantonese");
 INSERT INTO geo_langLabels VALUES("sme", "swe", "Samiska");
