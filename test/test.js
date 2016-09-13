@@ -155,11 +155,11 @@ describe('Language functions', function() {
 			assert.deepEqual(result[0].type, 'living');
 			assert.deepEqual(result[0].label, null);
 
-			assert.deepEqual(result[8366].iso639_3, 'zun');
-			assert.deepEqual(result[8366].iso639_1, null);
-			assert.deepEqual(result[8366].scope, 'individual');
-			assert.deepEqual(result[8366].type, 'living');
-			assert.deepEqual(result[8366].label, 'Zuni');
+			assert.deepEqual(result[8367].iso639_3, 'zun');
+			assert.deepEqual(result[8367].iso639_1, null);
+			assert.deepEqual(result[8367].scope, 'individual');
+			assert.deepEqual(result[8367].type, 'living');
+			assert.deepEqual(result[8367].label, 'Zuni');
 
 			done();
 		});
