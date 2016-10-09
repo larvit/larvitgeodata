@@ -1,6 +1,6 @@
 {
   "name": "larvitgeodata",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "dependencies": {
     "async": "^2.0.1",
     "cheerio": "^0.22.0",

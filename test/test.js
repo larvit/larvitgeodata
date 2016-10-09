@@ -46,7 +46,7 @@ before(function(done) {
 		log.verbose('DB config: ' + JSON.stringify(require(confFile)));
 
 		db.setup(require(confFile), function(err) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
 			checkTables();
 		});
@@ -89,7 +89,7 @@ after(function(done) {
 describe('Check database for existing stuff', function() {
 	it('Check for Sweden', function(done) {
 		db.query('SELECT * FROM geo_territories WHERE iso3166_1_alpha_2 = \'SE\'', function(err, rows) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 			assert(rows.length === 1, 'There should be exactly one row');
 			assert(rows[0].iso3166_1_num === 752, 'Swedens numeric code is 752');
 
@@ -99,7 +99,7 @@ describe('Check database for existing stuff', function() {
 
 	it('Check for Swedish language label', function(done) {
 		db.query('SELECT * FROM geo_langLabels WHERE langIso639_3 = \'swe\' AND labelIso639_3 = \'swe\'', function(err, rows) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 			assert(rows.length === 1, 'There should be exactly one row');
 			assert(rows[0].label === 'svenska', 'The correct label should be "svenska", but is "' + rows[0].label + '"');
 
@@ -109,7 +109,7 @@ describe('Check database for existing stuff', function() {
 
 	it('Check for Swedish territory label', function(done) {
 		db.query('SELECT * FROM geo_territoryLabels WHERE labelIso639_3 = \'swe\' AND terIso3166_1_alpha_2 = \'SE\'', function(err, rows) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 			assert.deepEqual(rows.length, 1);
 			assert(rows[0].label === 'Sverige', 'The correct label should be "Sverige", but is "' + rows[0].label + '"');
 
@@ -121,7 +121,7 @@ describe('Check database for existing stuff', function() {
 describe('Language functions', function() {
 	it('Getting language labels, basic', function(done) {
 		geoData.getLanguages(function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 140);
 
@@ -145,7 +145,7 @@ describe('Language functions', function() {
 
 	it('Getting all languages', function(done) {
 		geoData.getLanguages({'type': false, 'scope': false, 'gotIso639_1': 'all'}, function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 8368);
 
@@ -169,7 +169,7 @@ describe('Language functions', function() {
 		geoData.labelLang = 'swe';
 
 		geoData.getLanguages(function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 140);
 
@@ -195,7 +195,7 @@ describe('Language functions', function() {
 
 	it('Get only swedish', function(done) {
 		geoData.getLanguages({'iso639_1': 'sv'}, function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 1);
 
@@ -209,7 +209,7 @@ describe('Language functions', function() {
 
 	it('Get only swedish and english', function(done) {
 		geoData.getLanguages({'iso639_3': ['swe', 'eng']}, function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 2);
 
@@ -229,9 +229,9 @@ describe('Language functions', function() {
 describe('Territory functions', function() {
 	it('Getting territory labels, basic', function(done) {
 		geoData.getTerritories(function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
-			assert.deepEqual(result.length, 249);
+			assert.deepEqual(result.length, 250);
 
 			assert.deepEqual(result[110].iso3166_1_num, 384);
 			assert.deepEqual(result[110].iso3166_1_alpha_3, 'CIV');
@@ -244,9 +244,9 @@ describe('Territory functions', function() {
 
 	it('Get Swedish labels', function(done) {
 		geoData.getTerritories({'labelLang': 'swe'}, function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
-			assert.deepEqual(result.length, 249);
+			assert.deepEqual(result.length, 250);
 
 			assert.deepEqual(result[110].iso3166_1_num, 417);
 			assert.deepEqual(result[110].iso3166_1_alpha_3, 'KGZ');
@@ -259,7 +259,7 @@ describe('Territory functions', function() {
 
 	it('Get only Germany', function(done) {
 		geoData.getTerritories({'iso3166_1_alpha_2': 'DE'}, function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 1);
 
@@ -274,7 +274,7 @@ describe('Territory functions', function() {
 
 	it('Get only Germany and Russia', function(done) {
 		geoData.getTerritories({'iso3166_1_alpha_2': ['DE', 'RU']}, function(err, result) {
-			assert( ! err, 'err should be negative');
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 2);
 
