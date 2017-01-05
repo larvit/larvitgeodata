@@ -83,6 +83,7 @@ before(function(done) {
 
 // Tear down the database
 after(function(done) {
+	
 	db.removeAllTables(done);
 });
 
@@ -287,6 +288,62 @@ describe('Territory functions', function() {
 			assert.deepEqual(result[1].iso3166_1_alpha_3, 'RUS');
 			assert.deepEqual(result[1].iso3166_1_alpha_2, 'RU');
 			assert.deepEqual(result[1].label, 'Russia');
+
+			done();
+		});
+	});
+});
+
+describe('Currency functions', function() {
+	it('Get currencies, iso_4217 codes only', function(done) {
+
+		geoData.getCurrencies(null, function(err, result){
+			if (err) throw err;
+
+			assert.deepEqual(result.length, 297);
+		});
+
+		done();
+	});
+
+	it('Get currencies with descriptions, without lables', function(done){
+
+		geoData.getCurrencies({descriptions: true}, function(err, result){
+			if(err) throw err;
+
+			assert.deepEqual(result.length, 297);
+			assert.deepEqual(result[0].description, 'Andorran Peseta');
+			assert.deepEqual(result[0].iso_4217, 'adp');
+			assert.deepEqual(result[0].displayName, undefined);
+			assert.deepEqual(result[0].symbol, undefined);
+
+			done();
+		});
+	});
+
+	it('Get currencies with lables, without descriptions', function(done) {
+
+		geoData.getCurrencies({labelLang: 'sv'}, function(err, result){
+			if(err) throw err;
+
+			assert.deepEqual(result.length, 297);
+			assert.deepEqual(result[1].description, undefined);
+			assert.deepEqual(result[1].displayName, 'Förenade Arabemiratens dirham');
+			assert.deepEqual(result[1].symbol, 'AED');
+
+			done();
+		});
+	});
+
+	it('Get currencies with descriptions and lables', function(done){
+
+		geoData.getCurrencies({labelLang: 'sv', descriptions: true}, function(err, result){
+			if(err) throw err;
+
+			assert.deepEqual(result.length, 297);
+			assert.deepEqual(result[1].description, 'United Arab Emirates Dirham');
+			assert.deepEqual(result[1].displayName, 'Förenade Arabemiratens dirham');
+			assert.deepEqual(result[1].symbol, 'AED');
 
 			done();
 		});

@@ -162,6 +162,36 @@ function getTerritories(options, cb) {
 	});
 }
 
+function getCurrencies(options, cb) {
+
+	const dbFields	= [];
+	let sql;
+
+	//just currency codes
+	if(!options || (! options.descriptions && ! options.labelLang)) {
+		sql = 'SELECT * FROM `geo_currencies`';
+	} else {
+
+		if(options.descriptions && ! options.labelLang) {
+			sql = 'SELECT c.iso_4217, cd.description FROM `geo_currencies` c JOIN `geo_currencyDescriptions` cd ON c.iso_4217 = cd.iso_4217';
+		} 
+
+		if(options.labelLang && ! options.descriptions) {
+			sql = 'SELECT c.iso_4217, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+			dbFields.push(options.labelLang);
+		}
+
+		if(options.descriptions && options.labelLang){
+			sql = 'SELECT c.iso_4217, cd.description, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencyDescriptions` cd ON c.iso_4217 = cd.iso_4217 JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+			dbFields.push(options.labelLang);		
+		}
+	}
+
+	ready(function() {
+		db.query(sql, dbFields, cb);
+	});
+}
+
 function ready(cb) {
 	if (dbChecked) {
 		cb();
@@ -173,4 +203,5 @@ function ready(cb) {
 
 exports.getLanguages	= getLanguages;
 exports.getTerritories	= getTerritories;
+exports.getCurrencies	= getCurrencies;
 exports.ready	= ready;
