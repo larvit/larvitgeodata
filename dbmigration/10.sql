@@ -1,16 +1,9 @@
 
 CREATE TABLE `geo_currencies` (
   `iso_4217` varchar(3) CHARACTER SET ascii NOT NULL,
+  `description` varchar(193) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`iso_4217`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `geo_currencyDescriptions` (
-  `iso_4217` varchar(3) CHARACTER SET ascii NOT NULL,
-  `description` varchar(193) COLLATE utf8mb4_unicode_ci NOT NULL,
-  KEY `iso_4217` (`iso_4217`),
-  CONSTRAINT `geo_currencyDescriptions_ibfk_1` FOREIGN KEY (`iso_4217`) REFERENCES `geo_currencies` (`iso_4217`) ON DELETE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 
 CREATE TABLE `geo_currencyLables` (
   `iso_4217` varchar(3) CHARACTER SET ascii NOT NULL,

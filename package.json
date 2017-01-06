@@ -10,7 +10,8 @@
   },
   "devDependencies": {
     "eslint": "^3.4.0",
-    "mocha": "^3.0.2"
+    "mocha": "^3.0.2",
+    "mocha-eslint": "^3.0.1"
   },
   "description": "Geo data, primarily ISO territories, languages etc. Data fetched mostly from CLDR.",
   "main": "index.js",

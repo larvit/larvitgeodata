@@ -1,9 +1,9 @@
 'use strict';
 
 const cheerio = require('cheerio'),
-      async   = require('async'),
-      fs      = require('fs'),
-      db      = require('larvitdb');
+	async   = require('async'),
+	fs      = require('fs'),
+	db      = require('larvitdb');
 
 exports = module.exports = function(cb) {
 	const dbIso3To2 = {},

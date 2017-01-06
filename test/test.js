@@ -308,7 +308,7 @@ describe('Currency functions', function() {
 
 	it('Get currencies with descriptions, without lables', function(done){
 
-		geoData.getCurrencies({descriptions: true}, function(err, result){
+		geoData.getCurrencies({'descriptions': true}, function(err, result){
 			if(err) throw err;
 
 			assert.deepEqual(result.length, 297);
@@ -323,7 +323,7 @@ describe('Currency functions', function() {
 
 	it('Get currencies with lables, without descriptions', function(done) {
 
-		geoData.getCurrencies({labelLang: 'sv'}, function(err, result){
+		geoData.getCurrencies({'labelLang': 'sv'}, function(err, result){
 			if(err) throw err;
 
 			assert.deepEqual(result.length, 297);
@@ -337,7 +337,7 @@ describe('Currency functions', function() {
 
 	it('Get currencies with descriptions and lables', function(done){
 
-		geoData.getCurrencies({labelLang: 'sv', descriptions: true}, function(err, result){
+		geoData.getCurrencies({'labelLang': 'sv', 'descriptions': true}, function(err, result){
 			if(err) throw err;
 
 			assert.deepEqual(result.length, 297);
