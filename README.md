@@ -53,3 +53,15 @@ geo.getTerritories({'labelLang': 'swe'}, function(err, result) {
 	// [...,{'iso3166_1_num': 166, 'iso3166_1_alpha_3': 'CCK', 'iso3166_1_alpha_2': 'CC', 'label': 'Kokosöarna'},...]
 });
 ```
+
+### Currencies
+
+Returns a list of currencies with iso4217 code with a localized display name and symbol and/or an english "description" that is similar to display name. "labelLang" expects the iso 639-1 iso code of the language.
+
+```javascript
+geo.getCurrencies({'labelLang': 'en', 'descriptions': false}, function(err, result) {
+	if (err) throw err;
+	// result:
+	// "[...,{"iso_4217":"adp","description":"Andorran Peseta","symbol":null,"displayName":"Andorran Peseta"},...]
+});
+```
