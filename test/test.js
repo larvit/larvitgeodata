@@ -17,7 +17,7 @@ log.add(log.transports.Console, {
 });
 
 // Make sure the database is set up
-before(function(done) {
+before(function (done) {
 	let confFile;
 
 	// Let this test take some time
@@ -26,7 +26,7 @@ before(function(done) {
 
 	// Check for empty db
 	function checkTables() {
-		db.query('SHOW TABLES', function(err, rows) {
+		db.query('SHOW TABLES', function (err, rows) {
 			if (err) {
 				log.error(err);
 				process.exit(1);
@@ -45,7 +45,7 @@ before(function(done) {
 	function runDbSetup(confFile) {
 		log.verbose('DB config: ' + JSON.stringify(require(confFile)));
 
-		db.setup(require(confFile), function(err) {
+		db.setup(require(confFile), function (err) {
 			if (err) throw err;
 
 			checkTables();
@@ -60,13 +60,13 @@ before(function(done) {
 
 	log.verbose('DB config file: "' + confFile + '"');
 
-	fs.stat(confFile, function(err) {
+	fs.stat(confFile, function (err) {
 		const altConfFile = __dirname + '/../config/' + confFile;
 
 		if (err) {
 			log.info('Failed to find config file "' + confFile + '", retrying with "' + altConfFile + '"');
 
-			fs.stat(altConfFile, function(err) {
+			fs.stat(altConfFile, function (err) {
 				if (err) {
 					assert( ! err, 'fs.stat failed: ' + err.message);
 				}
@@ -82,14 +82,14 @@ before(function(done) {
 });
 
 // Tear down the database
-after(function(done) {
-	
+after(function (done) {
+
 	db.removeAllTables(done);
 });
 
-describe('Check database for existing stuff', function() {
-	it('Check for Sweden', function(done) {
-		db.query('SELECT * FROM geo_territories WHERE iso3166_1_alpha_2 = \'SE\'', function(err, rows) {
+describe('Check database for existing stuff', function () {
+	it('Check for Sweden', function (done) {
+		db.query('SELECT * FROM geo_territories WHERE iso3166_1_alpha_2 = \'SE\'', function (err, rows) {
 			if (err) throw err;
 			assert(rows.length === 1, 'There should be exactly one row');
 			assert(rows[0].iso3166_1_num === 752, 'Swedens numeric code is 752');
@@ -98,8 +98,8 @@ describe('Check database for existing stuff', function() {
 		});
 	});
 
-	it('Check for Swedish language label', function(done) {
-		db.query('SELECT * FROM geo_langLabels WHERE langIso639_3 = \'swe\' AND labelIso639_3 = \'swe\'', function(err, rows) {
+	it('Check for Swedish language label', function (done) {
+		db.query('SELECT * FROM geo_langLabels WHERE langIso639_3 = \'swe\' AND labelIso639_3 = \'swe\'', function (err, rows) {
 			if (err) throw err;
 			assert(rows.length === 1, 'There should be exactly one row');
 			assert(rows[0].label === 'svenska', 'The correct label should be "svenska", but is "' + rows[0].label + '"');
@@ -108,8 +108,8 @@ describe('Check database for existing stuff', function() {
 		});
 	});
 
-	it('Check for Swedish territory label', function(done) {
-		db.query('SELECT * FROM geo_territoryLabels WHERE labelIso639_3 = \'swe\' AND terIso3166_1_alpha_2 = \'SE\'', function(err, rows) {
+	it('Check for Swedish territory label', function (done) {
+		db.query('SELECT * FROM geo_territoryLabels WHERE labelIso639_3 = \'swe\' AND terIso3166_1_alpha_2 = \'SE\'', function (err, rows) {
 			if (err) throw err;
 			assert.deepEqual(rows.length, 1);
 			assert(rows[0].label === 'Sverige', 'The correct label should be "Sverige", but is "' + rows[0].label + '"');
@@ -119,9 +119,9 @@ describe('Check database for existing stuff', function() {
 	});
 });
 
-describe('Language functions', function() {
-	it('Getting language labels, basic', function(done) {
-		geoData.getLanguages(function(err, result) {
+describe('Language functions', function () {
+	it('Getting language labels, basic', function (done) {
+		geoData.getLanguages(function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 140);
@@ -144,8 +144,8 @@ describe('Language functions', function() {
 		});
 	});
 
-	it('Getting all languages', function(done) {
-		geoData.getLanguages({'type': false, 'scope': false, 'gotIso639_1': 'all'}, function(err, result) {
+	it('Getting all languages', function (done) {
+		geoData.getLanguages({'type': false, 'scope': false, 'gotIso639_1': 'all'}, function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 8368);
@@ -166,10 +166,10 @@ describe('Language functions', function() {
 		});
 	});
 
-	it('Getting all swedish language labels', function(done) {
+	it('Getting all swedish language labels', function (done) {
 		geoData.labelLang = 'swe';
 
-		geoData.getLanguages(function(err, result) {
+		geoData.getLanguages(function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 140);
@@ -194,8 +194,8 @@ describe('Language functions', function() {
 		});
 	});
 
-	it('Get only swedish', function(done) {
-		geoData.getLanguages({'iso639_1': 'sv'}, function(err, result) {
+	it('Get only swedish', function (done) {
+		geoData.getLanguages({'iso639_1': 'sv'}, function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 1);
@@ -208,8 +208,8 @@ describe('Language functions', function() {
 		});
 	});
 
-	it('Get only swedish and english', function(done) {
-		geoData.getLanguages({'iso639_3': ['swe', 'eng']}, function(err, result) {
+	it('Get only swedish and english', function (done) {
+		geoData.getLanguages({'iso639_3': ['swe', 'eng']}, function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 2);
@@ -227,9 +227,9 @@ describe('Language functions', function() {
 	});
 });
 
-describe('Territory functions', function() {
-	it('Getting territory labels, basic', function(done) {
-		geoData.getTerritories(function(err, result) {
+describe('Territory functions', function () {
+	it('Getting territory labels, basic', function (done) {
+		geoData.getTerritories(function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 250);
@@ -243,8 +243,8 @@ describe('Territory functions', function() {
 		});
 	});
 
-	it('Get Swedish labels', function(done) {
-		geoData.getTerritories({'labelLang': 'swe'}, function(err, result) {
+	it('Get Swedish labels', function (done) {
+		geoData.getTerritories({'labelLang': 'swe'}, function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 250);
@@ -258,8 +258,8 @@ describe('Territory functions', function() {
 		});
 	});
 
-	it('Get only Germany', function(done) {
-		geoData.getTerritories({'iso3166_1_alpha_2': 'DE'}, function(err, result) {
+	it('Get only Germany', function (done) {
+		geoData.getTerritories({'iso3166_1_alpha_2': 'DE'}, function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 1);
@@ -273,8 +273,8 @@ describe('Territory functions', function() {
 		});
 	});
 
-	it('Get only Germany and Russia', function(done) {
-		geoData.getTerritories({'iso3166_1_alpha_2': ['DE', 'RU']}, function(err, result) {
+	it('Get only Germany and Russia', function (done) {
+		geoData.getTerritories({'iso3166_1_alpha_2': ['DE', 'RU']}, function (err, result) {
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 2);
@@ -294,10 +294,10 @@ describe('Territory functions', function() {
 	});
 });
 
-describe('Currency functions', function() {
-	it('Get currencies, iso_4217 codes only', function(done) {
+describe('Currency functions', function () {
+	it('Get currencies, iso_4217 codes only', function (done) {
 
-		geoData.getCurrencies(null, function(err, result){
+		geoData.getCurrencies(null, function (err, result){
 			if (err) throw err;
 
 			assert.deepEqual(result.length, 297);
@@ -306,10 +306,10 @@ describe('Currency functions', function() {
 		done();
 	});
 
-	it('Get currencies with descriptions, without lables', function(done){
+	it('Get currencies with descriptions, without lables', function (done){
 
-		geoData.getCurrencies({'descriptions': true}, function(err, result){
-			if(err) throw err;
+		geoData.getCurrencies({'descriptions': true}, function (err, result){
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 297);
 			assert.deepEqual(result[0].description, 'Andorran Peseta');
@@ -321,10 +321,10 @@ describe('Currency functions', function() {
 		});
 	});
 
-	it('Get currencies with lables, without descriptions', function(done) {
+	it('Get currencies with lables, without descriptions', function (done) {
 
-		geoData.getCurrencies({'labelLang': 'sv'}, function(err, result){
-			if(err) throw err;
+		geoData.getCurrencies({'labelLang': 'sv'}, function (err, result){
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 297);
 			assert.deepEqual(result[1].description, undefined);
@@ -335,10 +335,10 @@ describe('Currency functions', function() {
 		});
 	});
 
-	it('Get currencies with descriptions and lables', function(done){
+	it('Get currencies with descriptions and lables', function (done){
 
-		geoData.getCurrencies({'labelLang': 'sv', 'descriptions': true}, function(err, result){
-			if(err) throw err;
+		geoData.getCurrencies({'labelLang': 'sv', 'descriptions': true}, function (err, result){
+			if (err) throw err;
 
 			assert.deepEqual(result.length, 297);
 			assert.deepEqual(result[1].description, 'United Arab Emirates Dirham');

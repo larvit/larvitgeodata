@@ -1,23 +1,20 @@
 'use strict';
 
-const cheerio = require('cheerio'),
-	async   = require('async'),
-	fs      = require('fs'),
-	db      = require('larvitdb');
+const	cheerio	= require('cheerio'),
+	async	= require('async'),
+	fs	= require('fs'),
+	db	= require('larvitdb');
 
-exports = module.exports = function(cb) {
-	const dbIso3To2 = new Map(),
-	      dbIso2To3 = new Map(),
-	      dbTers    = [],
-	      tasks     = [];
+exports = module.exports = function (cb) {
+	const	dbIso3To2	= new Map(),
+		dbIso2To3	= new Map(),
+		dbTers	= [],
+		tasks	= [];
 
 	// Fetch all database languages
-	tasks.push(function(cb) {
-		db.query('SELECT iso639_3, iso639_1 FROM geo_langs', function(err, rows) {
-			if (err) {
-				cb(err);
-				return;
-			}
+	tasks.push(function (cb) {
+		db.query('SELECT iso639_3, iso639_1 FROM geo_langs', function (err, rows) {
+			if (err) return cb(err);
 
 			for (let i = 0; rows[i] !== undefined; i ++) {
 				dbIso3To2.set(rows[i].iso639_3, rows[i].iso639_1);
@@ -29,42 +26,42 @@ exports = module.exports = function(cb) {
 	});
 
 	// Fetch all ter codes
-	tasks.push(function(cb) {
-		db.query('SELECT iso3166_1_alpha_2 FROM geo_territories', function(err, rows) {
-			if (err) {
-				cb(err);
-				return;
-			}
+	tasks.push(function (cb) {
+		db.query('SELECT iso3166_1_alpha_2 FROM geo_territories', function (err, rows) {
+			if (err) return cb(err);
 
-			for (let i = 0; rows[i] !== undefined; i ++)
+			for (let i = 0; rows[i] !== undefined; i ++) {
 				dbTers.push(rows[i].iso3166_1_alpha_2);
+			}
 
 			cb();
 		});
 	});
 
 	// Insert territory display names
-	tasks.push(function(cb) {
-		const sqlTasks = [],
-		      labels   = new Map(),
-		      preSql   = 'INSERT INTO geo_territoryLabels VALUES',
-		      files    = fs.readdirSync(__dirname + '/../cldrData/common/main');
+	tasks.push(function (cb) {
+		const	sqlTasks	= [],
+			labels	= new Map(),
+			preSql	= 'INSERT INTO geo_territoryLabels VALUES',
+			files	= fs.readdirSync(__dirname + '/../cldrData/common/main');
 
 		for (let i = 0; files[i] !== undefined; i ++) {
-			let $            = cheerio.load(fs.readFileSync(__dirname + '/../cldrData/common/main/' + files[i]), {'xmlMode': true}),
-			    labelLang    = files[i].substring(0, files[i].length - 4),
-			    labelLangMap = new Map();
+			let	$	= cheerio.load(fs.readFileSync(__dirname + '/../cldrData/common/main/' + files[i]), {'xmlMode': true}),
+				labelLang	= files[i].substring(0, files[i].length - 4),
+				labelLangMap	= new Map();
 
-			if (labelLang.length === 2 && dbIso2To3.get(labelLang) !== undefined)
+			if (labelLang.length === 2 && dbIso2To3.get(labelLang) !== undefined) {
 				labelLang = dbIso2To3.get(labelLang);
+			}
 
-			if (dbIso3To2.get(labelLang) === undefined)
+			if (dbIso3To2.get(labelLang) === undefined) {
 				continue;
+			}
 
 			labels.set(labelLang, labelLangMap);
 
-			$('ldml > localeDisplayNames > territories > territory').each(function() {
-				const terCode = $(this).attr('type');
+			$('ldml > localeDisplayNames > territories > territory').each(function () {
+				const	terCode	= $(this).attr('type');
 
 				if (dbTers.indexOf(terCode) !== - 1) {
 					let labelMap;
@@ -86,12 +83,12 @@ exports = module.exports = function(cb) {
 			});
 		}
 
-		labels.forEach(function(langLabels, langCode) {
-			const dbFields = [];
+		labels.forEach(function (langLabels, langCode) {
+			const	dbFields	= [];
 
-			let sql = preSql;
+			let	sql	= preSql;
 
-			langLabels.forEach(function(labelVersions, terCode) {
+			langLabels.forEach(function (labelVersions, terCode) {
 				sql += '(?,?,?,?),';
 				dbFields.push(terCode);
 				dbFields.push(langCode);
@@ -100,7 +97,7 @@ exports = module.exports = function(cb) {
 			});
 
 			sql = sql.substring(0, sql.length - 1);
-			sqlTasks.push(function(cb) {
+			sqlTasks.push(function (cb) {
 				db.query(sql, dbFields, cb);
 			});
 		});

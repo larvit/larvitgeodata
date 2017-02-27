@@ -12,7 +12,7 @@ let	dbChecked	= false;
 exports.labelLang = 'eng';
 
 // Handle database migrations
-dbmigration(function(err) {
+dbmigration(function (err) {
 	if (err) {
 		log.error('larvitgeodata: Database error: ' + err.message);
 		return;
@@ -29,26 +29,26 @@ function getCurrencies(options, cb) {
 	let sql;
 
 	//just currency codes
-	if(! options || (! options.descriptions && ! options.labelLang)) {
+	if (! options || (! options.descriptions && ! options.labelLang)) {
 		sql = 'SELECT iso_4217 FROM `geo_currencies`';
 	} else {
 
-		if(options.descriptions && ! options.labelLang) {
+		if (options.descriptions && ! options.labelLang) {
 			sql = 'SELECT * FROM `geo_currencies`';
-		} 
+		}
 
-		if(options.labelLang && ! options.descriptions) {
+		if (options.labelLang && ! options.descriptions) {
 			sql = 'SELECT c.iso_4217, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
 			dbFields.push(options.labelLang);
 		}
 
-		if(options.descriptions && options.labelLang){
+		if (options.descriptions && options.labelLang){
 			sql = 'SELECT c.iso_4217, c.description, cl.symbol, cl.displayName FROM `geo_currencies` c JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
-			dbFields.push(options.labelLang);		
+			dbFields.push(options.labelLang);
 		}
 	}
 
-	ready(function() {
+	ready(function () {
 		db.query(sql, dbFields, cb);
 	});
 }
@@ -60,9 +60,9 @@ function getCurrencies(options, cb) {
  * @param func cb(err, result) - result like [{'iso639_3': 'aar', 'iso639_1': 'aa', 'type': 'living', 'scope': 'individual', 'label': 'Afar'}]
  */
 function getLanguages(options, cb) {
-	const dbFields = [];
+	const	dbFields	= [];
 
-	let sql;
+	let	sql;
 
 	if (typeof options === 'function') {
 		cb	= options;
@@ -131,7 +131,7 @@ function getLanguages(options, cb) {
 
 	sql += ' ORDER BY labels.label, langs.iso639_3';
 
-	ready(function() {
+	ready(function () {
 		db.query(sql, dbFields, cb);
 	});
 }
@@ -143,9 +143,9 @@ function getLanguages(options, cb) {
  * @param func cb(err, result) - result like [{'iso3166_1_num': 4, 'iso3166_1_alpha_3': 'AFG', 'iso3166_1_alpha_2': 'AF', 'label': 'Afghanistan'}]
  */
 function getTerritories(options, cb) {
-	const dbFields = [];
+	const	dbFields	= [];
 
-	let sql;
+	let	sql;
 
 	if (typeof options === 'function') {
 		cb	= options;
@@ -188,16 +188,13 @@ function getTerritories(options, cb) {
 
 	sql += ' ORDER BY labels.label, territories.iso3166_1_alpha_2';
 
-	ready(function() {
+	ready(function () {
 		db.query(sql, dbFields, cb);
 	});
 }
 
 function ready(cb) {
-	if (dbChecked) {
-		cb();
-		return;
-	}
+	if (dbChecked) return cb();
 
 	eventEmitter.on('checked', cb);
 }
