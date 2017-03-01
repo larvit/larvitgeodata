@@ -4,7 +4,9 @@ const	events	= require('events'),
 	eventEmitter	= new events.EventEmitter(),
 	dbmigration	= require('larvitdbmigration')({'tableName': 'geo_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
 	log	= require('winston'),
-	db	= require('larvitdb');
+	db	= require('larvitdb'),
+	_	= require('lodash'),
+	async	= require('async');
 
 let	dbChecked	= false;
 
@@ -137,6 +139,88 @@ function getLanguages(options, cb) {
 }
 
 /**
+ * Get region with parent regions for territory
+ *
+ * @param territoryCode int - the iso3166_1_num of the territory
+ * @param func cb(err, result) - result like [{'name': 'Something', 'id': '1', 'type': 'subcontinent', 'slug': 'something', 'parent': { 'id' : '2', 'name': 'Parent region' ...} }]
+ */
+function getRegionForTerritory(territoryCode, cb) {
+
+	const tasks = [];
+
+	let regionsTerritory = null,
+		regionRegions = null,
+		regions = null;
+
+	tasks.push(function (cb) {
+		db.query('SELECT * FROM geo_regions', function (err, rows) {
+			regions = rows;
+			cb(err);
+		});
+	});
+
+	tasks.push(function (cb) {
+		db.query('SELECT * FROM geo_regions_territory WHERE contains = ?', [territoryCode], function (err, rows) {
+			regionsTerritory = rows;
+			cb(err);
+		});
+	});
+
+	tasks.push(function (cb) {
+		db.query('SELECT * FROM geo_regions_region', function (err, rows) {
+			regionRegions = rows;
+			cb(err);
+		});
+	});
+
+	async.parallel(tasks, function (err) {
+
+		const result = [], 
+			getParents = function (regionId) {
+				let rr = _.find(regionRegions, function (item) { return item.contains === regionId; });
+
+				if (rr === undefined) { 
+					return false; 
+				} else {
+
+					let pr = _.find(regions, function (item) { return item.id == rr.id; }),
+						parentsParent = getParents(pr.id);
+
+					if (parentsParent) {
+						pr.parent = parentsParent;
+					}
+					return pr;
+				}
+			};
+
+		if (err) {
+			log.warn('larvitgeodata - index.js: Failed to get data: ' + err.message);
+			cb(err);
+			return;
+		}
+
+		for (let rt of regionsTerritory) {
+			
+			const region = _.find(regions, function (r) { return r.id == rt.id; });
+
+			if (region === undefined) { 
+				continue; 
+			} else {
+				const tp = getParents(region.id);
+
+				if (tp) {
+					region.parent = tp;
+				}
+
+				result.push(region);
+			}
+		}
+
+		cb(null, result);
+	});
+}
+
+/**
  * Get list of territories
  *
  * @param obj options -
@@ -201,5 +285,6 @@ function ready(cb) {
 
 exports.getCurrencies	= getCurrencies;
 exports.getLanguages	= getLanguages;
+exports.getRegionForTerritory	= getRegionForTerritory;
 exports.getTerritories	= getTerritories;
 exports.ready	= ready;

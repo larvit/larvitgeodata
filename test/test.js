@@ -10,7 +10,7 @@ let geoData;
 // Set up winston
 log.remove(log.transports.Console);
 log.add(log.transports.Console, {
-	'level':	'warn',
+	'level':	'info',
 	'colorize':	true,
 	'timestamp':	true,
 	'json':	false
@@ -83,7 +83,6 @@ before(function (done) {
 
 // Tear down the database
 after(function (done) {
-
 	db.removeAllTables(done);
 });
 
@@ -288,6 +287,34 @@ describe('Territory functions', function () {
 			assert.deepEqual(result[1].iso3166_1_alpha_3, 'RUS');
 			assert.deepEqual(result[1].iso3166_1_alpha_2, 'RU');
 			assert.deepEqual(result[1].label, 'Russia');
+
+			done();
+		});
+	});
+
+	it('Get region for territory', function (done) {
+									//Germany
+		geoData.getRegionForTerritory(276, function (err, regions) {
+			
+			if (err) { throw ere; };
+
+			assert.notEqual(regions, undefined);
+			assert.deepEqual(regions.length, 2);
+			
+			for (let r of regions) {
+				if (r.id == 155) {
+
+					assert.deepEqual(r.name, 'Western Europe');
+					assert.notEqual(r.parent, undefined);
+					assert.deepEqual(r.parent.id, 150);
+					assert.notEqual(r.parent.parent, undefined);
+					assert.deepEqual(r.parent.parent.id, 1);
+
+				} else {
+					assert.deepEqual(r.name, 'European Union');
+					assert.deepEqual(r.parent, undefined);
+				}
+			}
 
 			done();
 		});
