@@ -2,7 +2,7 @@
 
 const	events	= require('events'),
 	eventEmitter	= new events.EventEmitter(),
-	dbmigration	= require('larvitdbmigration')({'tableName': 'geo_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
+	DbMigration	= require('larvitdbmigration'),
 	log	= require('winston'),
 	db	= require('larvitdb'),
 	_	= require('lodash'),
@@ -13,28 +13,39 @@ let	dbChecked	= false;
 // What language to use for lables
 exports.labelLang = 'eng';
 
-// Handle database migrations
-dbmigration(function (err) {
-	if (err) {
-		log.error('larvitgeodata: Database error: ' + err.message);
-		return;
-	}
+(function () {
+	const	options	= {};
 
-	dbChecked = true;
-	eventEmitter.emit('checked');
-});
+	let	dbMigration;
+
+	log.debug('larvitgeodata: index.js - Waiting for dbmigration()');
+
+	options.dbType	= 'larvitdb';
+	options.dbDriver	= db;
+	options.tableName	= 'geo_db_version';
+	options.migrationScriptsPath	= __dirname + '/dbmigration';
+	dbMigration	= new DbMigration(options);
+
+	dbMigration.run(function (err) {
+		if (err) {
+			log.error('larvitgeodata: index.js - Database migration error: ' + err.message);
+		}
+
+		dbChecked = true;
+		eventEmitter.emit('checked');
+	});
+})();
 
 //options liek {'descriptions': true, 'labelLang': 'sv'} or null for just currency codes
 function getCurrencies(options, cb) {
+	const	dbFields	= [];
 
-	const dbFields	= [];
-	let sql;
+	let	sql;
 
-	//just currency codes
-	if (! options || (! options.descriptions && ! options.labelLang)) {
+	// Just currency codes
+	if ( ! options || (! options.descriptions && ! options.labelLang)) {
 		sql = 'SELECT iso_4217 FROM `geo_currencies`';
 	} else {
-
 		if (options.descriptions && ! options.labelLang) {
 			sql = 'SELECT * FROM `geo_currencies`';
 		}
@@ -145,12 +156,11 @@ function getLanguages(options, cb) {
  * @param func cb(err, result) - result like [{'name': 'Something', 'id': '1', 'type': 'subcontinent', 'slug': 'something', 'parent': { 'id' : '2', 'name': 'Parent region' ...} }]
  */
 function getRegionForTerritory(territoryCode, cb) {
-
 	const tasks = [];
 
-	let regionsTerritory = null,
-		regionRegions = null,
-		regions = null;
+	let	regionsTerritory	= null,
+		regionRegions	= null,
+		regions	= null;
 
 	tasks.push(function (cb) {
 		db.query('SELECT * FROM geo_regions', function (err, rows) {
@@ -175,38 +185,36 @@ function getRegionForTerritory(territoryCode, cb) {
 
 	async.parallel(tasks, function (err) {
 
-		const result = [], 
+		const result = [],
 			getParents = function (regionId) {
-				let rr = _.find(regionRegions, function (item) { return item.contains === regionId; });
+				let	rr	= _.find(regionRegions, function (item) { return item.contains === regionId; });
 
-				if (rr === undefined) { 
-					return false; 
+				if (rr === undefined) {
+					return false;
 				} else {
-
-					let pr = _.find(regions, function (item) { return item.id == rr.id; }),
-						parentsParent = getParents(pr.id);
+					let	pr	= _.find(regions, function (item) { return item.id == rr.id; }),
+						parentsParent	= getParents(pr.id);
 
 					if (parentsParent) {
 						pr.parent = parentsParent;
 					}
+
 					return pr;
 				}
 			};
 
 		if (err) {
 			log.warn('larvitgeodata - index.js: Failed to get data: ' + err.message);
-			cb(err);
-			return;
+			return cb(err);
 		}
 
 		for (let rt of regionsTerritory) {
-			
 			const region = _.find(regions, function (r) { return r.id == rt.id; });
 
-			if (region === undefined) { 
-				continue; 
+			if (region === undefined) {
+				continue;
 			} else {
-				const tp = getParents(region.id);
+				const	tp	= getParents(region.id);
 
 				if (tp) {
 					region.parent = tp;
