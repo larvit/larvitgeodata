@@ -36,7 +36,7 @@ exports.labelLang = 'eng';
 	});
 })();
 
-//options liek {'descriptions': true, 'labelLang': 'sv'} or null for just currency codes
+//options like {'descriptions': true, 'labelLang': 'sv'} or null for just currency codes
 function getCurrencies(options, cb) {
 	const	dbFields	= [];
 
