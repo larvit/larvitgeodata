@@ -2,3 +2,4 @@ logs
 npm-debug.log*
 node_modules
 config/db_test.json
+package-lock.json
