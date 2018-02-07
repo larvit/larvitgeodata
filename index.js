@@ -87,17 +87,17 @@ function getLanguages(options, cb) {
 	if (options.scope	=== undefined) options.scope	= 'individual';
 	if (options.type	=== undefined) options.type	= 'living';
 
-	if (options.iso639_3 !== undefined && ! (options.iso639_3 instanceof Array)) {
-		options.iso639_3 = [options.iso639_3];
+	if (options.iso639_3 !== undefined && options.iso639_3 !== false && ! (options.iso639_3 instanceof Array)) {
+		options.iso639_3	= [options.iso639_3];
 	}
 
-	if (options.iso639_1 !== undefined && ! (options.iso639_1 instanceof Array)) {
-		options.iso639_1 = [options.iso639_1];
+	if (options.iso639_1 !== undefined && options.iso639_1 !== false && ! (options.iso639_1 instanceof Array)) {
+		options.iso639_1	= [options.iso639_1];
 	}
 
 	sql = 'SELECT langs.*, labels.label FROM geo_langs langs LEFT JOIN geo_langLabels labels ON labels.langIso639_3 = langs.iso639_3 ';
 
-	if (options.labelLang !== false && options.labelLang !== undefined) {
+	if (options.labelLang !== false && options.labelLang !== undefined && options.labelLang !== false) {
 		sql += ' AND labels.labelIso639_3 = ?';
 		dbFields.push(options.labelLang);
 	}
@@ -164,21 +164,21 @@ function getRegionForTerritory(territoryCode, cb) {
 
 	tasks.push(function (cb) {
 		db.query('SELECT * FROM geo_regions', function (err, rows) {
-			regions = rows;
+			regions	= rows;
 			cb(err);
 		});
 	});
 
 	tasks.push(function (cb) {
-		db.query('SELECT * FROM geo_regions_territory WHERE contains = ?', [territoryCode], function (err, rows) {
-			regionsTerritory = rows;
+		db.query('SELECT * FROM geo_regions_territory WHERE contains = ?', [String(territoryCode)], function (err, rows) {
+			regionsTerritory	= rows;
 			cb(err);
 		});
 	});
 
 	tasks.push(function (cb) {
 		db.query('SELECT * FROM geo_regions_region', function (err, rows) {
-			regionRegions = rows;
+			regionRegions	= rows;
 			cb(err);
 		});
 	});
@@ -196,7 +196,7 @@ function getRegionForTerritory(territoryCode, cb) {
 						parentsParent	= getParents(pr.id);
 
 					if (parentsParent) {
-						pr.parent = parentsParent;
+						pr.parent	= parentsParent;
 					}
 
 					return pr;
@@ -209,7 +209,7 @@ function getRegionForTerritory(territoryCode, cb) {
 		}
 
 		for (let rt of regionsTerritory) {
-			const region = _.find(regions, function (r) { return r.id == rt.id; });
+			const	region	= _.find(regions, function (r) { return r.id == rt.id; });
 
 			if (region === undefined) {
 				continue;
@@ -245,7 +245,7 @@ function getTerritories(options, cb) {
 	}
 
 	if (options.labelLang === undefined) {
-		options.labelLang = exports.labelLang;
+		options.labelLang	= exports.labelLang;
 	}
 
 	sql = 'SELECT territories.*, labels.label FROM geo_territories territories LEFT JOIN geo_territoryLabels labels ON labels.terIso3166_1_alpha_2 = territories.iso3166_1_alpha_2 ';
