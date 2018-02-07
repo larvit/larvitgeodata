@@ -1,6 +1,7 @@
 'use strict';
 
 const	assert	= require('assert'),
+	async	= require('async'),
 	log	= require('winston'),
 	db	= require('larvitdb'),
 	fs	= require('fs');
@@ -18,66 +19,66 @@ log.add(log.transports.Console, {
 
 // Make sure the database is set up
 before(function (done) {
-	let confFile;
+	const	tasks	= [];
 
 	// Let this test take some time
 	this.timeout(60000);
 	this.slow(3000);
 
-	// Check for empty db
-	function checkTables() {
-		db.query('SHOW TABLES', function (err, rows) {
+	// Run DB Setup
+	tasks.push(function (cb) {
+		let confFile;
+
+		if (process.env.DBCONFFILE === undefined) {
+			confFile	= __dirname + '/../config/db_test.json';
+		} else {
+			confFile	= process.env.DBCONFFILE;
+		}
+
+		log.verbose('DB config file: "' + confFile + '"');
+
+		// First look for absolute path
+		fs.stat(confFile, function (err) {
 			if (err) {
-				log.error(err);
-				process.exit(1);
+
+				// Then look for this string in the config folder
+				confFile = __dirname + '/../config/' + confFile;
+				fs.stat(confFile, function (err) {
+					if (err) throw err;
+					log.verbose('DB config: ' + JSON.stringify(require(confFile)));
+					db.setup(require(confFile), cb);
+				});
+
+				return;
 			}
 
-			if (rows.length) {
-				log.error('Database is not empty. To make a test, you must supply an empty database!');
-				process.exit(1);
-			}
-
-			geoData = require(__dirname + '/../index.js');
-			geoData.ready(done);
+			log.verbose('DB config: ' + JSON.stringify(require(confFile)));
+			db.setup(require(confFile), cb);
 		});
-	}
+	});
 
-	function runDbSetup(confFile) {
-		log.verbose('DB config: ' + JSON.stringify(require(confFile)));
-
-		db.setup(require(confFile), function (err) {
+	// Check for empty db
+	tasks.push(function (cb) {
+		db.query('SHOW TABLES', function (err, rows) {
 			if (err) throw err;
 
-			checkTables();
+			if (rows.length) {
+				throw new Error('Database is not empty. To make a test, you must supply an empty database!');
+			}
+
+			cb();
 		});
-	}
+	});
 
-	if (process.argv[3] === undefined) {
-		confFile = __dirname + '/../config/db_test.json';
-	} else {
-		confFile = process.argv[3].split('=')[1];
-	}
+	// Setup geoData
+	tasks.push(function (cb) {
+		geoData = require(__dirname + '/../index.js');
+		geoData.ready(cb);
+	});
 
-	log.verbose('DB config file: "' + confFile + '"');
-
-	fs.stat(confFile, function (err) {
-		const altConfFile = __dirname + '/../config/' + confFile;
-
-		if (err) {
-			log.info('Failed to find config file "' + confFile + '", retrying with "' + altConfFile + '"');
-
-			fs.stat(altConfFile, function (err) {
-				if (err) {
-					assert( ! err, 'fs.stat failed: ' + err.message);
-				}
-
-				if ( ! err) {
-					runDbSetup(altConfFile);
-				}
-			});
-		} else {
-			runDbSetup(confFile);
-		}
+	async.series(tasks, function (err) {
+		if (err) throw err;
+		done();
 	});
 });
 
