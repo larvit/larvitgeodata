@@ -44,19 +44,19 @@ function getCurrencies(options, cb) {
 
 	// Just currency codes
 	if ( ! options || (! options.descriptions && ! options.labelLang)) {
-		sql = 'SELECT iso_4217 FROM `geo_currencies`';
+		sql	= 'SELECT iso_4217 FROM `geo_currencies`';
 	} else {
 		if (options.descriptions && ! options.labelLang) {
-			sql = 'SELECT * FROM `geo_currencies`';
+			sql	= 'SELECT * FROM `geo_currencies`';
 		}
 
 		if (options.labelLang && ! options.descriptions) {
-			sql = 'SELECT c.iso_4217, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+			sql	= 'SELECT c.iso_4217, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
 			dbFields.push(options.labelLang);
 		}
 
-		if (options.descriptions && options.labelLang){
-			sql = 'SELECT c.iso_4217, c.description, cl.symbol, cl.displayName FROM `geo_currencies` c JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+		if (options.descriptions && options.labelLang) {
+			sql	= 'SELECT c.iso_4217, c.description, cl.symbol, cl.displayName FROM `geo_currencies` c JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
 			dbFields.push(options.labelLang);
 		}
 	}

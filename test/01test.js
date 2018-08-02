@@ -322,7 +322,7 @@ describe('Territory functions', function () {
 describe('Currency functions', function () {
 	it('Get currencies, iso_4217 codes only', function (done) {
 
-		geoData.getCurrencies(null, function (err, result){
+		geoData.getCurrencies(null, function (err, result) {
 			if (err) throw err;
 
 			assert.strictEqual(result.length, 297);
@@ -331,9 +331,9 @@ describe('Currency functions', function () {
 		done();
 	});
 
-	it('Get currencies with descriptions, without lables', function (done){
+	it('Get currencies with descriptions, without lables', function (done) {
 
-		geoData.getCurrencies({'descriptions': true}, function (err, result){
+		geoData.getCurrencies({'descriptions': true}, function (err, result) {
 			if (err) throw err;
 
 			assert.strictEqual(result.length, 297);
@@ -348,7 +348,7 @@ describe('Currency functions', function () {
 
 	it('Get currencies with lables, without descriptions', function (done) {
 
-		geoData.getCurrencies({'labelLang': 'sv'}, function (err, result){
+		geoData.getCurrencies({'labelLang': 'sv'}, function (err, result) {
 			if (err) throw err;
 
 			assert.strictEqual(result.length, 297);
@@ -360,17 +360,5 @@ describe('Currency functions', function () {
 		});
 	});
 
-	it('Get currencies with descriptions and lables', function (done){
-
-		geoData.getCurrencies({'labelLang': 'sv', 'descriptions': true}, function (err, result){
-			if (err) throw err;
-
-			assert.strictEqual(result.length, 297);
-			assert.strictEqual(result[1].description, 'United Arab Emirates Dirham');
-			assert.strictEqual(result[1].displayName, 'Förenade Arabemiratens dirham');
-			assert.strictEqual(result[1].symbol, 'AED');
-
-			done();
-		});
-	});
+	//it('Get currencies with descriptions and lables', function (done));
 });
