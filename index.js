@@ -1,44 +1,62 @@
 'use strict';
 
-const	events	= require('events'),
-	eventEmitter	= new events.EventEmitter(),
+const	EventEmitter	= require('events').EventEmitter,
 	DbMigration	= require('larvitdbmigration'),
-	log	= require('winston'),
-	db	= require('larvitdb'),
+	utils	= require('larvitutils'),
 	_	= require('lodash'),
 	async	= require('async');
 
-let	dbChecked	= false;
+function Geodata(options) {
+	const	that	= this,
+		dbMigrationOptions	= {};
 
-// What language to use for lables
-exports.labelLang = 'eng';
+	let dbMigration;
 
-(function () {
-	const	options	= {};
+	that.options	= options || {};
 
-	let	dbMigration;
+	if ( ! that.options.db) {
+		throw new Error('Required option db is missing');
+	}
 
-	log.debug('larvitgeodata: index.js - Waiting for dbmigration()');
+	if ( ! that.options.log) {
+		const utilsInstance = new utils();
+		that.options.log = new utilsInstance.Log();
+	}
 
-	options.dbType	= 'larvitdb';
-	options.dbDriver	= db;
-	options.tableName	= 'geo_db_version';
-	options.migrationScriptsPath	= __dirname + '/dbmigration';
-	dbMigration	= new DbMigration(options);
+	that.db	= that.options.db;
+	that.dbChecked = false;
+	that.eventEmitter = new EventEmitter();
+	that.labelLang = 'eng';
 
+	that.options.log.debug('larvitgeodata: index.js - Waiting for dbmigration()');
+
+	dbMigrationOptions.dbType	= that.options.dbType || 'larvitdb';
+	dbMigrationOptions.dbDriver	= that.options.db;
+	dbMigrationOptions.tableName	= that.options.tableName || 'geo_db_version';
+	dbMigrationOptions.migrationScriptsPath	= that.options.migrationScriptsPath || __dirname + '/dbmigration';
+
+	dbMigration	= new DbMigration(dbMigrationOptions);
 	dbMigration.run(function (err) {
 		if (err) {
-			log.error('larvitgeodata: index.js - Database migration error: ' + err.message);
+			that.log.error('larvitgeodata: index.js - Database migration error: ' + err.message);
 		}
 
-		dbChecked = true;
-		eventEmitter.emit('checked');
+		that.dbChecked = true;
+		that.eventEmitter.emit('checked');
 	});
-})();
+}
 
-//options like {'descriptions': true, 'labelLang': 'sv'} or null for just currency codes
-function getCurrencies(options, cb) {
-	const	dbFields	= [];
+Geodata.prototype.ready = function ready(cb) {
+	if (this.dbChecked) {
+		return cb();
+	}
+
+	this.eventEmitter.on('checked', cb);
+};
+
+Geodata.prototype.getCurrencies = function getCurrencies(options, cb) {
+	const	dbFields	= [],
+		that	= this;
 
 	let	sql;
 
@@ -61,10 +79,10 @@ function getCurrencies(options, cb) {
 		}
 	}
 
-	ready(function () {
-		db.query(sql, dbFields, cb);
+	that.ready(function () {
+		that.db.query(sql, dbFields, cb);
 	});
-}
+};
 
 /**
  * Get list of languages
@@ -72,8 +90,9 @@ function getCurrencies(options, cb) {
  * @param obj options -
  * @param func cb(err, result) - result like [{'iso639_3': 'aar', 'iso639_1': 'aa', 'type': 'living', 'scope': 'individual', 'label': 'Afar'}]
  */
-function getLanguages(options, cb) {
-	const	dbFields	= [];
+Geodata.prototype.getLanguages = function getLanguages(options, cb) {
+	const	dbFields	= [],
+		that	= this;
 
 	let	sql;
 
@@ -83,7 +102,7 @@ function getLanguages(options, cb) {
 	}
 
 	if (options.gotIso639_1	=== undefined) options.gotIso639_1	= true;
-	if (options.labelLang	=== undefined) options.labelLang	= exports.labelLang;
+	if (options.labelLang	=== undefined) options.labelLang	= that.labelLang;
 	if (options.scope	=== undefined) options.scope	= 'individual';
 	if (options.type	=== undefined) options.type	= 'living';
 
@@ -144,10 +163,10 @@ function getLanguages(options, cb) {
 
 	sql += ' ORDER BY labels.label, langs.iso639_3';
 
-	ready(function () {
-		db.query(sql, dbFields, cb);
+	this.ready(function () {
+		that.db.query(sql, dbFields, cb);
 	});
-}
+};
 
 /**
  * Get region with parent regions for territory
@@ -155,36 +174,36 @@ function getLanguages(options, cb) {
  * @param territoryCode int - the iso3166_1_num of the territory
  * @param func cb(err, result) - result like [{'name': 'Something', 'id': '1', 'type': 'subcontinent', 'slug': 'something', 'parent': { 'id' : '2', 'name': 'Parent region' ...} }]
  */
-function getRegionForTerritory(territoryCode, cb) {
-	const tasks = [];
+Geodata.prototype.getRegionForTerritory = function getRegionForTerritory(territoryCode, cb) {
+	const tasks = [],
+		that	= this;
 
 	let	regionsTerritory	= null,
 		regionRegions	= null,
 		regions	= null;
 
 	tasks.push(function (cb) {
-		db.query('SELECT * FROM geo_regions', function (err, rows) {
+		that.db.query('SELECT * FROM geo_regions', function (err, rows) {
 			regions	= rows;
 			cb(err);
 		});
 	});
 
 	tasks.push(function (cb) {
-		db.query('SELECT * FROM geo_regions_territory WHERE contains = ?', [String(territoryCode)], function (err, rows) {
+		that.db.query('SELECT * FROM geo_regions_territory WHERE contains = ?', [String(territoryCode)], function (err, rows) {
 			regionsTerritory	= rows;
 			cb(err);
 		});
 	});
 
 	tasks.push(function (cb) {
-		db.query('SELECT * FROM geo_regions_region', function (err, rows) {
+		that.db.query('SELECT * FROM geo_regions_region', function (err, rows) {
 			regionRegions	= rows;
 			cb(err);
 		});
 	});
 
 	async.parallel(tasks, function (err) {
-
 		const result = [],
 			getParents = function (regionId) {
 				let	rr	= _.find(regionRegions, function (item) { return item.contains === regionId; });
@@ -204,7 +223,7 @@ function getRegionForTerritory(territoryCode, cb) {
 			};
 
 		if (err) {
-			log.warn('larvitgeodata - index.js: Failed to get data: ' + err.message);
+			that.log.warn('larvitgeodata - index.js: Failed to get data: ' + err.message);
 			return cb(err);
 		}
 
@@ -226,7 +245,7 @@ function getRegionForTerritory(territoryCode, cb) {
 
 		cb(null, result);
 	});
-}
+};
 
 /**
  * Get list of territories
@@ -234,8 +253,9 @@ function getRegionForTerritory(territoryCode, cb) {
  * @param obj options -
  * @param func cb(err, result) - result like [{'iso3166_1_num': 4, 'iso3166_1_alpha_3': 'AFG', 'iso3166_1_alpha_2': 'AF', 'label': 'Afghanistan'}]
  */
-function getTerritories(options, cb) {
-	const	dbFields	= [];
+Geodata.prototype.getTerritories = function getTerritories(options, cb) {
+	const	dbFields	= [],
+		that	= this;
 
 	let	sql;
 
@@ -245,7 +265,7 @@ function getTerritories(options, cb) {
 	}
 
 	if (options.labelLang === undefined) {
-		options.labelLang	= exports.labelLang;
+		options.labelLang	= that.labelLang;
 	}
 
 	sql = 'SELECT territories.*, labels.label FROM geo_territories territories LEFT JOIN geo_territoryLabels labels ON labels.terIso3166_1_alpha_2 = territories.iso3166_1_alpha_2 ';
@@ -280,19 +300,9 @@ function getTerritories(options, cb) {
 
 	sql += ' ORDER BY labels.label, territories.iso3166_1_alpha_2';
 
-	ready(function () {
-		db.query(sql, dbFields, cb);
+	this.ready(function () {
+		that.db.query(sql, dbFields, cb);
 	});
-}
+};
 
-function ready(cb) {
-	if (dbChecked) return cb();
-
-	eventEmitter.on('checked', cb);
-}
-
-exports.getCurrencies	= getCurrencies;
-exports.getLanguages	= getLanguages;
-exports.getRegionForTerritory	= getRegionForTerritory;
-exports.getTerritories	= getTerritories;
-exports.ready	= ready;
+exports.Geodata = Geodata;

@@ -2,20 +2,10 @@
 
 const	assert	= require('assert'),
 	async	= require('async'),
-	log	= require('winston'),
 	db	= require('larvitdb'),
 	fs	= require('fs');
 
 let geoData;
-
-// Set up winston
-log.remove(log.transports.Console);
-log.add(log.transports.Console, {
-	'level':	'info',
-	'colorize':	true,
-	'timestamp':	true,
-	'json':	false
-});
 
 // Make sure the database is set up
 before(function (done) {
@@ -35,8 +25,6 @@ before(function (done) {
 			confFile	= process.env.DBCONFFILE;
 		}
 
-		log.verbose('DB config file: "' + confFile + '"');
-
 		// First look for absolute path
 		fs.stat(confFile, function (err) {
 			if (err) {
@@ -45,14 +33,12 @@ before(function (done) {
 				confFile = __dirname + '/../config/' + confFile;
 				fs.stat(confFile, function (err) {
 					if (err) throw err;
-					log.verbose('DB config: ' + JSON.stringify(require(confFile)));
 					db.setup(require(confFile), cb);
 				});
 
 				return;
 			}
 
-			log.verbose('DB config: ' + JSON.stringify(require(confFile)));
 			db.setup(require(confFile), cb);
 		});
 	});
@@ -72,7 +58,13 @@ before(function (done) {
 
 	// Setup geoData
 	tasks.push(function (cb) {
-		geoData = require(__dirname + '/../index.js');
+		geoData = new (require('../index.js').Geodata)({
+			'db': db,
+			'log': {
+				'debug': function () {}
+			}
+		});
+
 		geoData.ready(cb);
 	});
 

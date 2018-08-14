@@ -4,9 +4,9 @@
   "dependencies": {
     "async": "^2.0.1",
     "cheerio": "^1.0.0-rc.2",
-    "larvitdb": "^2.0.0",
+    "larvitdb": "^2.1.0",
     "larvitdbmigration": "^3.0.0",
-    "winston": "^2.2.0",
+    "larvitutils": "^2.0.0",
     "lodash": "^4.17.4"
   },
   "devDependencies": {
