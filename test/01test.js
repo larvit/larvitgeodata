@@ -1,11 +1,14 @@
 'use strict';
 
 const	assert	= require('assert'),
+	LUtils	= require('larvitutils'),
+	lUtils	= new LUtils(),
 	async	= require('async'),
+	log	= new lUtils.Log('warning'),
 	db	= require('larvitdb'),
 	fs	= require('fs');
 
-let geoData;
+let	geoData;
 
 // Make sure the database is set up
 before(function (done) {
@@ -17,7 +20,7 @@ before(function (done) {
 
 	// Run DB Setup
 	tasks.push(function (cb) {
-		let confFile;
+		let	confFile;
 
 		if (process.env.DBCONFFILE === undefined) {
 			confFile	= __dirname + '/../config/db_test.json';
@@ -27,19 +30,25 @@ before(function (done) {
 
 		// First look for absolute path
 		fs.stat(confFile, function (err) {
+			let	dbConf;
+
 			if (err) {
 
 				// Then look for this string in the config folder
-				confFile = __dirname + '/../config/' + confFile;
+				confFile	= __dirname + '/../config/' + confFile;
 				fs.stat(confFile, function (err) {
 					if (err) throw err;
-					db.setup(require(confFile), cb);
+					dbConf	= require(confFile);
+					dbConf.log	= log;
+					db.setup(dbConf, cb);
 				});
 
 				return;
 			}
 
-			db.setup(require(confFile), cb);
+			dbConf	= require(confFile);
+			dbConf.log	= log;
+			db.setup(dbConf, cb);
 		});
 	});
 
@@ -59,10 +68,8 @@ before(function (done) {
 	// Setup geoData
 	tasks.push(function (cb) {
 		geoData = new (require('../index.js').Geodata)({
-			'db': db,
-			'log': {
-				'debug': function () {}
-			}
+			'db':	db,
+			'log':	log
 		});
 
 		geoData.ready(cb);

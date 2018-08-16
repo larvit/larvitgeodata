@@ -14,7 +14,19 @@ npm i larvitgeodata;
 In your start script file, run this:
 
 ```javascript
-const geo = require('larvitgeodata');
+const	Geo	= require('larvitgeodata'),
+	db	= require('larvitdb');
+
+let	geo;
+
+db.setup(...); // See https://github.com/larvit/larvitdb for details on how to configure the database
+
+geo	= new Geo({
+	'db':	db,
+
+	// Optional
+	'log':	new (new (require('larvitutils')())).Log()
+});
 
 geo.ready(function (err) {
 	if (err) throw err;

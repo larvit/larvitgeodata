@@ -2,15 +2,15 @@
 
 const	EventEmitter	= require('events').EventEmitter,
 	DbMigration	= require('larvitdbmigration'),
-	utils	= require('larvitutils'),
-	_	= require('lodash'),
-	async	= require('async');
+	LUtils	= require('larvitutils'),
+	async	= require('async'),
+	_	= require('lodash');
 
 function Geodata(options) {
 	const	that	= this,
 		dbMigrationOptions	= {};
 
-	let dbMigration;
+	let	dbMigration;
 
 	that.options	= options || {};
 
@@ -19,21 +19,23 @@ function Geodata(options) {
 	}
 
 	if ( ! that.options.log) {
-		const utilsInstance = new utils();
-		that.options.log = new utilsInstance.Log();
+		const	lUtils	= new LUtils();
+		that.options.log	= new lUtils.Log();
 	}
+	that.log	= that.options.log;
 
 	that.db	= that.options.db;
-	that.dbChecked = false;
-	that.eventEmitter = new EventEmitter();
-	that.labelLang = 'eng';
+	that.dbChecked	= false;
+	that.eventEmitter	= new EventEmitter();
+	that.labelLang	= 'eng';
 
-	that.options.log.debug('larvitgeodata: index.js - Waiting for dbmigration()');
+	that.log.debug('larvitgeodata: index.js - Waiting for dbmigration()');
 
-	dbMigrationOptions.dbType	= that.options.dbType || 'larvitdb';
-	dbMigrationOptions.dbDriver	= that.options.db;
+	dbMigrationOptions.dbType	= that.options.dbType || 'mariadb';
+	dbMigrationOptions.dbDriver	= that.db;
 	dbMigrationOptions.tableName	= that.options.tableName || 'geo_db_version';
 	dbMigrationOptions.migrationScriptsPath	= that.options.migrationScriptsPath || __dirname + '/dbmigration';
+	dbMigrationOptions.log	= that.log;
 
 	dbMigration	= new DbMigration(dbMigrationOptions);
 	dbMigration.run(function (err) {
@@ -41,7 +43,7 @@ function Geodata(options) {
 			that.log.error('larvitgeodata: index.js - Database migration error: ' + err.message);
 		}
 
-		that.dbChecked = true;
+		that.dbChecked	= true;
 		that.eventEmitter.emit('checked');
 	});
 }
@@ -147,7 +149,7 @@ Geodata.prototype.getLanguages = function getLanguages(options, cb) {
 			dbFields.push(options.iso639_1[i]);
 		}
 
-		sql = sql.substring(0, sql.length - 1) + ')';
+		sql	= sql.substring(0, sql.length - 1) + ')';
 	}
 
 	if (options.iso639_3 !== undefined) {
@@ -175,7 +177,7 @@ Geodata.prototype.getLanguages = function getLanguages(options, cb) {
  * @param func cb(err, result) - result like [{'name': 'Something', 'id': '1', 'type': 'subcontinent', 'slug': 'something', 'parent': { 'id' : '2', 'name': 'Parent region' ...} }]
  */
 Geodata.prototype.getRegionForTerritory = function getRegionForTerritory(territoryCode, cb) {
-	const tasks = [],
+	const	tasks	= [],
 		that	= this;
 
 	let	regionsTerritory	= null,
@@ -295,7 +297,7 @@ Geodata.prototype.getTerritories = function getTerritories(options, cb) {
 			dbFields.push(options[key][i]);
 		}
 
-		sql = sql.substring(0, sql.length - 1) + ')';
+		sql	= sql.substring(0, sql.length - 1) + ')';
 	}
 
 	sql += ' ORDER BY labels.label, territories.iso3166_1_alpha_2';
