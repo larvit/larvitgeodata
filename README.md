@@ -21,7 +21,7 @@ let	geo;
 
 db.setup(...); // See https://github.com/larvit/larvitdb for details on how to configure the database
 
-geo	= new Geo({
+geo = new Geo({
 	'db':	db,
 
 	// Optional
