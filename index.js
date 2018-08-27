@@ -307,4 +307,4 @@ Geodata.prototype.getTerritories = function getTerritories(options, cb) {
 	});
 };
 
-exports.Geodata = Geodata;
+exports = module.exports = Geodata;

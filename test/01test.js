@@ -1,6 +1,7 @@
 'use strict';
 
-const	assert	= require('assert'),
+const	GeoLib	= require(__dirname + '/../index.js'),
+	assert	= require('assert'),
 	LUtils	= require('larvitutils'),
 	lUtils	= new LUtils(),
 	async	= require('async'),
@@ -67,7 +68,7 @@ before(function (done) {
 
 	// Setup geoData
 	tasks.push(function (cb) {
-		geoData = new (require('../index.js').Geodata)({
+		geoData = new GeoLib({
 			'db':	db,
 			'log':	log
 		});
