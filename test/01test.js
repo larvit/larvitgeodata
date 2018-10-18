@@ -317,6 +317,87 @@ describe('Territory functions', function () {
 			done();
 		});
 	});
+
+	it('Get counties without terrtiory code', function (done) {
+		geoData.getCounties({}, function (err, result) {
+			assert.notStrictEqual(err, null);
+			assert.notStrictEqual(err, undefined);
+			assert.strictEqual(result, undefined);
+			done();
+		});
+	});
+
+	it('Get municipalities without terrtiory code', function (done) {
+		geoData.getMunicipalities({}, function (err, result) {
+			assert.notStrictEqual(err, null);
+			assert.notStrictEqual(err, undefined);
+			assert.strictEqual(result, undefined);
+			done();
+		});
+	});
+
+	it('Get counties', function (done) {
+		geoData.getCounties({'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'code'}, function (err, result) {
+			if (err) throw err;
+
+			assert.strictEqual(result.length, 21);
+			assert.strictEqual(result[0].label, 'Stockholms län');
+			assert.strictEqual(result[0].iso_3166_1_alpha_3, 'SWE');
+			assert.strictEqual(result[0].code, '01');
+
+			geoData.getCounties({'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'label'}, function (err, result) {
+				if (err) throw err;
+	
+				assert.strictEqual(result.length, 21);
+				assert.strictEqual(result[0].label, 'Blekinge län');
+				assert.strictEqual(result[0].iso_3166_1_alpha_3, 'SWE');
+				assert.strictEqual(result[0].code, '10');
+	
+				done();
+			});
+		});
+	});
+
+	it('Get counties with municipalities', function (done) {
+		geoData.getCounties({'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'code', 'includeMunicipalities': true}, function (err, result) {
+			if (err) throw err;
+
+			assert.strictEqual(result.length, 21);
+			assert.strictEqual(result[0].label, 'Stockholms län');
+			assert.strictEqual(result[0].iso_3166_1_alpha_3, 'SWE');
+			assert.strictEqual(result[0].code, '01');
+
+			assert.strictEqual(result[0].municipalities.length, 26);
+			assert.strictEqual(result[0].municipalities[0].label, 'Botkyrka');
+			assert.strictEqual(result[0].municipalities[0].code, '0127');
+
+			done();
+		});
+	});
+
+	it('Get municipalities', function (done) {
+		geoData.getMunicipalities({'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'code'}, function (err, result) {
+			if (err) throw err;
+
+			assert.strictEqual(result.length, 290);
+			assert.strictEqual(result[0].label, 'Upplands Väsby');
+			assert.strictEqual(result[0].county_label, 'Stockholms län');
+			assert.strictEqual(result[0].iso_3166_1_alpha_3, 'SWE');
+			assert.strictEqual(result[0].code, '0114');
+
+			geoData.getMunicipalities({'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'label'}, function (err, result) {
+				if (err) throw err;
+	
+				assert.strictEqual(result.length, 290);
+				assert.strictEqual(result[0].label, 'Ale');
+				assert.strictEqual(result[0].county_label, 'Västra Götalands län');
+				assert.strictEqual(result[0].iso_3166_1_alpha_3, 'SWE');
+				assert.strictEqual(result[0].code, '1440');
+	
+				done();
+			});
+		});
+	});
 });
 
 describe('Currency functions', function () {

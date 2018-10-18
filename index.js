@@ -56,6 +56,62 @@ Geodata.prototype.ready = function ready(cb) {
 	this.eventEmitter.on('checked', cb);
 };
 
+/**
+ * Get list of counties for country
+ * 
+ * @param obj options - {'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'code', 'includeMunicipalities': false}
+ * @param func cb(err, result) - result like [{'iso_3166_1_alpha_3': 'SWE', 'label': 'Stockholms län': 'code': '01', 'municipalities': [{}]}]
+ */
+Geodata.prototype.getCounties = function getCounties(options, cb) {
+	const that = this,
+		dbFields = [];
+
+	if ( ! options || ! options.iso_3166_1_alpha_3) return cb(new Error('Required option "iso_3166_1_alpha_3" not set'));
+	
+	let sql = 'SELECT * FROM `geo_counties` WHERE `iso_3166_1_alpha_3` = ?';
+	dbFields.push(options.iso_3166_1_alpha_3);
+
+	if (options.orderBy === 'code') {
+		sql += ' ORDER BY `code`';
+	} else if (options.orderBy === 'label') {
+		sql += ' ORDER BY `label`';
+	}
+
+
+	that.db.query(sql, dbFields, function (err, rows) {
+		if (err) return cb(err);
+
+		const counties = [];
+
+		for (let i = 0; rows[i] !== undefined; i ++) {
+			counties.push({
+				'iso_3166_1_alpha_3': rows[i].iso_3166_1_alpha_3,
+				'label': rows[i].label,
+				'code': rows[i].code
+			});
+		}
+
+		if (options.includeMunicipalities === true) {
+			const tasks = [];
+
+			for (let i = 0; counties[i] !== undefined; i ++) {
+				tasks.push(function (cb) {
+					that.getMunicipalities({'iso_3166_1_alpha_3': options.iso_3166_1_alpha_3, 'county_label': counties[i].label}, function (err, result) {
+						counties[i].municipalities = result;
+						cb(err);
+					});
+				});
+			}
+
+			async.parallel(tasks, function (err) {
+				cb(err, counties);
+			});
+		} else {
+			cb(null, counties);
+		}
+	});
+};
+
 Geodata.prototype.getCurrencies = function getCurrencies(options, cb) {
 	const	dbFields	= [],
 		that	= this;
@@ -167,6 +223,50 @@ Geodata.prototype.getLanguages = function getLanguages(options, cb) {
 
 	this.ready(function () {
 		that.db.query(sql, dbFields, cb);
+	});
+};
+
+/**
+ * Get list of municiaplities for country and conty
+ *
+ * @param obj options {'}
+ * @param func cb(err, result) - result like [{'iso_3166_1_alpha_3': 'SWE', 'county_label': 'Stockholms län', 'label': 'Vallentuna', 'code': '0115'}]
+ */
+Geodata.prototype.getMunicipalities = function getMunicipalities(options, cb) {
+	const that = this,
+		dbFields = [];
+
+	if ( ! options || ! options.iso_3166_1_alpha_3) return cb(new Error('Required option "iso_3166_1_alpha_3" not set'));
+
+	let sql = 'SELECT * FROM geo_municipalities WHERE iso_3166_1_alpha_3 = ?';
+	dbFields.push(options.iso_3166_1_alpha_3);
+
+	if (options.county_label) {
+		sql += ' AND county_label = ?';
+		dbFields.push(options.county_label);
+	}
+
+	if (options.orderBy === 'code') {
+		sql += ' ORDER BY code';
+	} else if (options.orderBy === 'label') {
+		sql += ' ORDER BY label';
+	}
+
+	that.db.query(sql, dbFields, function (err, rows) {
+		if (err) return cb(err);
+
+		let municiaplities = [];
+
+		for (let i = 0; rows[i] !== undefined; i ++) {
+			municiaplities.push({
+				'iso_3166_1_alpha_3': rows[i].iso_3166_1_alpha_3,
+				'county_label': rows[i].county_label,
+				'label': rows[i].label,
+				'code': rows[i].code
+			});
+		}
+
+		return cb(err, municiaplities);
 	});
 };
 
