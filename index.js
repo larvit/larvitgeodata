@@ -58,7 +58,7 @@ Geodata.prototype.ready = function ready(cb) {
 
 /**
  * Get list of counties for country
- * 
+ *
  * @param obj options - {'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'code', 'includeMunicipalities': false}
  * @param func cb(err, result) - result like [{'iso_3166_1_alpha_3': 'SWE', 'label': 'Stockholms län': 'code': '01', 'municipalities': [{}]}]
  */
@@ -67,7 +67,7 @@ Geodata.prototype.getCounties = function getCounties(options, cb) {
 		dbFields = [];
 
 	if ( ! options || ! options.iso_3166_1_alpha_3) return cb(new Error('Required option "iso_3166_1_alpha_3" not set'));
-	
+
 	let sql = 'SELECT * FROM `geo_counties` WHERE `iso_3166_1_alpha_3` = ?';
 	dbFields.push(options.iso_3166_1_alpha_3);
 
@@ -127,12 +127,12 @@ Geodata.prototype.getCurrencies = function getCurrencies(options, cb) {
 		}
 
 		if (options.labelLang && ! options.descriptions) {
-			sql	= 'SELECT c.iso_4217, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+			sql	= 'SELECT c.iso_4217, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencylables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
 			dbFields.push(options.labelLang);
 		}
 
 		if (options.descriptions && options.labelLang) {
-			sql	= 'SELECT c.iso_4217, c.description, cl.symbol, cl.displayName FROM `geo_currencies` c JOIN `geo_currencyLables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+			sql	= 'SELECT c.iso_4217, c.description, cl.symbol, cl.displayName FROM `geo_currencies` c JOIN `geo_currencylables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
 			dbFields.push(options.labelLang);
 		}
 	}
@@ -172,7 +172,7 @@ Geodata.prototype.getLanguages = function getLanguages(options, cb) {
 		options.iso639_1	= [options.iso639_1];
 	}
 
-	sql = 'SELECT langs.*, labels.label FROM geo_langs langs LEFT JOIN geo_langLabels labels ON labels.langIso639_3 = langs.iso639_3 ';
+	sql = 'SELECT langs.*, labels.label FROM geo_langs langs LEFT JOIN geo_langlabels labels ON labels.langIso639_3 = langs.iso639_3 ';
 
 	if (options.labelLang !== false && options.labelLang !== undefined && options.labelLang !== false) {
 		sql += ' AND labels.labelIso639_3 = ?';
@@ -370,7 +370,7 @@ Geodata.prototype.getTerritories = function getTerritories(options, cb) {
 		options.labelLang	= that.labelLang;
 	}
 
-	sql = 'SELECT territories.*, labels.label FROM geo_territories territories LEFT JOIN geo_territoryLabels labels ON labels.terIso3166_1_alpha_2 = territories.iso3166_1_alpha_2 ';
+	sql = 'SELECT territories.*, labels.label FROM geo_territories territories LEFT JOIN geo_territorylabels labels ON labels.terIso3166_1_alpha_2 = territories.iso3166_1_alpha_2 ';
 
 	if (options.labelLang !== false && options.labelLang !== undefined) {
 		sql += ' AND labels.labelIso639_3 = ?';

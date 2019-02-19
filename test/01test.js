@@ -99,7 +99,7 @@ describe('Check database for existing stuff', function () {
 	});
 
 	it('Check for Swedish language label', function (done) {
-		db.query('SELECT * FROM geo_langLabels WHERE langIso639_3 = \'swe\' AND labelIso639_3 = \'swe\'', function (err, rows) {
+		db.query('SELECT * FROM geo_langlabels WHERE langIso639_3 = \'swe\' AND labelIso639_3 = \'swe\'', function (err, rows) {
 			if (err) throw err;
 			assert(rows.length === 1, 'There should be exactly one row');
 			assert(rows[0].label === 'svenska', 'The correct label should be "svenska", but is "' + rows[0].label + '"');
@@ -109,7 +109,7 @@ describe('Check database for existing stuff', function () {
 	});
 
 	it('Check for Swedish territory label', function (done) {
-		db.query('SELECT * FROM geo_territoryLabels WHERE labelIso639_3 = \'swe\' AND terIso3166_1_alpha_2 = \'SE\'', function (err, rows) {
+		db.query('SELECT * FROM geo_territorylabels WHERE labelIso639_3 = \'swe\' AND terIso3166_1_alpha_2 = \'SE\'', function (err, rows) {
 			if (err) throw err;
 			assert.strictEqual(rows.length, 1);
 			assert(rows[0].label === 'Sverige', 'The correct label should be "Sverige", but is "' + rows[0].label + '"');
@@ -347,12 +347,12 @@ describe('Territory functions', function () {
 
 			geoData.getCounties({'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'label'}, function (err, result) {
 				if (err) throw err;
-	
+
 				assert.strictEqual(result.length, 21);
 				assert.strictEqual(result[0].label, 'Blekinge län');
 				assert.strictEqual(result[0].iso_3166_1_alpha_3, 'SWE');
 				assert.strictEqual(result[0].code, '10');
-	
+
 				done();
 			});
 		});
@@ -387,13 +387,13 @@ describe('Territory functions', function () {
 
 			geoData.getMunicipalities({'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'label'}, function (err, result) {
 				if (err) throw err;
-	
+
 				assert.strictEqual(result.length, 290);
 				assert.strictEqual(result[0].label, 'Ale');
 				assert.strictEqual(result[0].county_label, 'Västra Götalands län');
 				assert.strictEqual(result[0].iso_3166_1_alpha_3, 'SWE');
 				assert.strictEqual(result[0].code, '1440');
-	
+
 				done();
 			});
 		});
