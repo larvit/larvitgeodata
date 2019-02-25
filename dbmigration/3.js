@@ -16,7 +16,8 @@ exports = module.exports = function (cb) {
 		];
 
 	if (expectedTableNames.length > 0) {
-		let tableNames = [];
+		let tableNames = [],
+			renameTableNames = [];
 
 		// Get all tables from list expectedTableNames
 		tasks.push(function (cb) {
@@ -52,12 +53,22 @@ exports = module.exports = function (cb) {
 			});
 		});
 
+		// Get table names with any upper case
+		tasks.push(function (cb) {
+			for (let i = 0; tableNames[i] !== undefined; i ++) {
+				if (tableNames[i] !== tableNames[i].toLowerCase()) {
+					renameTableNames.push(tableNames[i]);
+				}
+			}
+			cb();
+		});
+
 		// Rename tables
 		tasks.push(function (cb) {
 			const tasks = [];
 
-			for (let i = 0; tableNames[i] !== undefined; i ++) {
-				const tableName = tableNames[i],
+			for (let i = 0; renameTableNames[i] !== undefined; i ++) {
+				const tableName = renameTableNames[i],
 					newTableName = tableName.toLowerCase();
 
 				tasks.push(function (cb) {
