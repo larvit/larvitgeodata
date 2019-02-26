@@ -5,7 +5,8 @@ const async = require('async');
 
 exports = module.exports = function (cb) {
 	const that = this,
-		tasks = [];
+		tasks = [],
+		db = require('larvitdb');
 
 	// Expected table names (lower case!)
 	let expectedTableNames =
@@ -21,30 +22,24 @@ exports = module.exports = function (cb) {
 
 		// Get all tables from list expectedTableNames
 		tasks.push(function (cb) {
-			that.options.dbDriver.query('SELECT table_name FROM information_schema.tables where LOWER(table_name) IN("' + expectedTableNames.join('","') + '")', function (err, rows) {
+			that.options.dbDriver.query('SELECT table_name FROM information_schema.tables WHERE table_schema = ?', db.conf.database, function (err, rows) {
 				if (err) return cb(err);
 
-				let resultTables = rows.map(r => r.table_name.toLowerCase()),
+				let resultTablesLowerCase = rows.map(r => r.table_name.toLowerCase()),
 					missingTables = [];
 
-				tableNames = rows.map(r => r.table_name);
+				for (let i = 0; i < rows.length; i ++) {
+					if (expectedTableNames.indexOf(rows[i].table_name.toLowerCase()) !== - 1) {
+						tableNames.push(rows[i].table_name);
+					}
+				}
 
 				for (let i = 0; i < expectedTableNames.length; i ++) {
-					if (resultTables.indexOf(expectedTableNames[i]) === - 1) {
+					if (resultTablesLowerCase.indexOf(expectedTableNames[i]) === - 1) {
 						missingTables.push(expectedTableNames[i]);
 					}
 				}
-				if (missingTables.length !== 0) {
-					err = new Error('Tables missing: ' + missingTables.join(', '));
 
-					return cb(err);
-				}
-
-				for (let i = 0; i < resultTables.length; i ++) {
-					if (expectedTableNames.indexOf(resultTables[i]) === - 1) {
-						missingTables.push(resultTables[i]);
-					}
-				}
 				if (missingTables.length !== 0) {
 					err = new Error('Tables missing: ' + missingTables.join(', '));
 				}
@@ -72,7 +67,7 @@ exports = module.exports = function (cb) {
 					newTableName = tableName.toLowerCase();
 
 				tasks.push(function (cb) {
-					that.options.dbDriver.query('RENAME TABLE `' + tableName + '` to `' + newTableName + '`', cb);
+					that.options.dbDriver.query('RENAME TABLE `' + tableName + '` TO `' + newTableName + '`', cb);
 				});
 			}
 			async.parallel(tasks, cb);
