@@ -17,7 +17,7 @@
     "lodash": "^4.17.4"
   },
   "devDependencies": {
-    "eslint": "5.15.2",
+    "eslint": "5.15.3",
     "mocha": "6.0.2",
     "mocha-eslint": "5.0.0"
   },
