@@ -258,6 +258,31 @@ describe('Territory functions', function () {
 		});
 	});
 
+	it('Get Swedish labels collate by utf8mb4_swedish_ci', function (done) {
+		geoData.getTerritories({'labelLang': 'swe', 'collate': 'utf8mb4_swedish_ci'}, function (err, result) {
+			if (err) throw err;
+
+			assert.strictEqual(result.length, 250);
+
+			assert.strictEqual(result[247].iso3166_1_num, 248);
+			assert.strictEqual(result[247].iso3166_1_alpha_3, 'ALA');
+			assert.strictEqual(result[247].iso3166_1_alpha_2, 'AX');
+			assert.strictEqual(result[247].label, 'Åland');
+
+			assert.strictEqual(result[248].iso3166_1_num, 40);
+			assert.strictEqual(result[248].iso3166_1_alpha_3, 'AUT');
+			assert.strictEqual(result[248].iso3166_1_alpha_2, 'AT');
+			assert.strictEqual(result[248].label, 'Österrike');
+
+			assert.strictEqual(result[249].iso3166_1_num, 626);
+			assert.strictEqual(result[249].iso3166_1_alpha_3, 'TLS');
+			assert.strictEqual(result[249].iso3166_1_alpha_2, 'TL');
+			assert.strictEqual(result[249].label, 'Östtimor');
+
+			done();
+		});
+	});
+
 	it('Get only Germany', function (done) {
 		geoData.getTerritories({'iso3166_1_alpha_2': 'DE'}, function (err, result) {
 			if (err) throw err;

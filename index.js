@@ -352,7 +352,7 @@ Geodata.prototype.getRegionForTerritory = function getRegionForTerritory(territo
 /**
  * Get list of territories
  *
- * @param obj options -
+ * @param obj options - (collate is applied on geo_territories.label and can be utf8mb4_general_ci, utf8mb4_bin, utf8mb4_unicode_ci, utf8mb4_icelandic_ci, utf8mb4_latvian_ci, utf8mb4_romanian_ci, utf8mb4_slovenian_ci, utf8mb4_polish_ci, utf8mb4_estonian_ci, utf8mb4_spanish_ci, utf8mb4_swedish_ci, utf8mb4_turkish_ci, utf8mb4_czech_ci, utf8mb4_danish_ci, utf8mb4_lithuanian_ci, utf8mb4_slovak_ci, utf8mb4_spanish2_ci, utf8mb4_roman_ci, utf8mb4_persian_ci, utf8mb4_esperanto_ci, utf8mb4_hungarian_ci, utf8mb4_sinhala_ci, utf8mb4_german2_ci, utf8mb4_croatian_mysql561_ci, utf8mb4_unicode_520_ci, utf8mb4_vietnamese_ci, utf8mb4_croatian_ci, utf8mb4_myanmar_ci, utf8mb4_thai_520_w2, utf8mb4_general_nopad_ci, utf8mb4_nopad_bin, utf8mb4_unicode_nopad_ci or utf8mb4_unicode_520_nopad_ci)
  * @param func cb(err, result) - result like [{'iso3166_1_num': 4, 'iso3166_1_alpha_3': 'AFG', 'iso3166_1_alpha_2': 'AF', 'label': 'Afghanistan'}]
  */
 Geodata.prototype.getTerritories = function getTerritories(options, cb) {
@@ -400,7 +400,13 @@ Geodata.prototype.getTerritories = function getTerritories(options, cb) {
 		sql	= sql.substring(0, sql.length - 1) + ')';
 	}
 
-	sql += ' ORDER BY labels.label, territories.iso3166_1_alpha_2';
+	if (options.collate && options.collate !== '') {
+		sql += ' ORDER BY labels.label COLLATE ?, territories.iso3166_1_alpha_2';
+		dbFields.push(options.collate);
+
+	} else {
+		sql += ' ORDER BY labels.label, territories.iso3166_1_alpha_2';
+	}
 
 	this.ready(function () {
 		that.db.query(sql, dbFields, cb);
