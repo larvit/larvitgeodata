@@ -5,8 +5,7 @@ const async = require('async');
 
 exports = module.exports = function (cb) {
 	const that = this,
-		tasks = [],
-		db = require('larvitdb');
+		tasks = [];
 
 	// Expected table names (lower case!)
 	let expectedTableNames =
@@ -22,7 +21,7 @@ exports = module.exports = function (cb) {
 
 		// Get all tables from list expectedTableNames
 		tasks.push(function (cb) {
-			that.options.dbDriver.query('SELECT table_name FROM information_schema.tables WHERE table_schema = ?', db.conf.database, function (err, rows) {
+			that.options.dbDriver.query('SELECT table_name FROM information_schema.tables WHERE table_schema = ?', that.options.dbDriver.conf.database, function (err, rows) {
 				if (err) return cb(err);
 
 				let resultTablesLowerCase = rows.map(r => r.table_name.toLowerCase()),
