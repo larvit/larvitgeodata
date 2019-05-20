@@ -9,7 +9,7 @@
     }
   ],
   "dependencies": {
-    "async": "^2.0.1",
+    "async": "^3.0.0",
     "cheerio": "^1.0.0-rc.2",
     "larvitdb": "^2.1.0",
     "larvitdbmigration": "^4.0.0",
