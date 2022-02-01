@@ -1,341 +1,274 @@
 'use strict';
 
-const	EventEmitter	= require('events').EventEmitter,
-	DbMigration	= require('larvitdbmigration'),
-	LUtils	= require('larvitutils'),
-	async	= require('async'),
-	_	= require('lodash');
+const EventEmitter = require('events').EventEmitter;
+const {DbMigration} = require('larvitdbmigration');
+const {Log} = require('larvitutils');
+const async = require('async');
 
-function Geodata(options) {
-	const	that	= this,
-		dbMigrationOptions	= {};
+class Geodata {
+	constructor(options) {
+		this.options = options || {};
 
-	let	dbMigration;
+		if (!this.options.db) throw new Error('Required option db is missing');
+		if (!this.options.log) {
+			this.options.log = new Log();
+		}
+		this.log = this.options.log;
 
-	that.options	= options || {};
+		this.db = this.options.db;
+		this.dbChecked = false;
+		this.eventEmitter = new EventEmitter();
+		this.labelLang = 'eng';
 
-	if ( ! that.options.db) {
-		throw new Error('Required option db is missing');
+		this.log.debug('larvitgeodata: index.js - Waiting for dbmigration()');
 	}
 
-	if ( ! that.options.log) {
-		const	lUtils	= new LUtils();
-		that.options.log	= new lUtils.Log();
-	}
-	that.log	= that.options.log;
-
-	that.db	= that.options.db;
-	that.dbChecked	= false;
-	that.eventEmitter	= new EventEmitter();
-	that.labelLang	= 'eng';
-
-	that.log.debug('larvitgeodata: index.js - Waiting for dbmigration()');
-
-	dbMigrationOptions.dbType	= that.options.dbType || 'mariadb';
-	dbMigrationOptions.dbDriver	= that.db;
-	dbMigrationOptions.tableName	= that.options.tableName || 'geo_db_version';
-	dbMigrationOptions.migrationScriptsPath	= that.options.migrationScriptsPath || __dirname + '/dbmigration';
-	dbMigrationOptions.log	= that.log;
-
-	dbMigration	= new DbMigration(dbMigrationOptions);
-	dbMigration.run(function (err) {
-		if (err) {
-			that.log.error('larvitgeodata: index.js - Database migration error: ' + err.message);
+	async ready() {
+		if (this.dbChecked) {
+			return;
 		}
 
-		that.dbChecked	= true;
-		that.eventEmitter.emit('checked');
-	});
-}
+		const dbMigrationOptions = {};
+		dbMigrationOptions.dbType = this.options.dbType || 'mariadb';
+		dbMigrationOptions.dbDriver = this.db;
+		dbMigrationOptions.tableName = this.options.tableName || 'geo_db_version';
+		dbMigrationOptions.migrationScriptsPath = this.options.migrationScriptsPath || __dirname + '/dbmigration';
+		dbMigrationOptions.log = this.log;
 
-Geodata.prototype.ready = function ready(cb) {
-	if (this.dbChecked) {
-		return cb();
-	}
+		const dbMigration = new DbMigration(dbMigrationOptions);
+		await dbMigration.run();
+		this.dbChecked = true;
+	};
 
-	this.eventEmitter.on('checked', cb);
-};
+	async getCounties(options) {
+		const dbFields = [];
 
-/**
- * Get list of counties for country
- *
- * @param obj options - {'iso_3166_1_alpha_3': 'SWE', 'orderBy': 'code', 'includeMunicipalities': false}
- * @param func cb(err, result) - result like [{'iso_3166_1_alpha_3': 'SWE', 'label': 'Stockholms län': 'code': '01', 'municipalities': [{}]}]
- */
-Geodata.prototype.getCounties = function getCounties(options, cb) {
-	const that = this,
-		dbFields = [];
+		if (!options || !options.iso_3166_1_alpha_3) throw new Error('Required option "iso_3166_1_alpha_3" not set');
 
-	if ( ! options || ! options.iso_3166_1_alpha_3) return cb(new Error('Required option "iso_3166_1_alpha_3" not set'));
+		let sql = 'SELECT * FROM `geo_counties` WHERE `iso_3166_1_alpha_3` = ?';
+		dbFields.push(options.iso_3166_1_alpha_3);
 
-	let sql = 'SELECT * FROM `geo_counties` WHERE `iso_3166_1_alpha_3` = ?';
-	dbFields.push(options.iso_3166_1_alpha_3);
+		if (options.orderBy === 'code') {
+			sql += ' ORDER BY `code`';
+		} else if (options.orderBy === 'label') {
+			sql += ' ORDER BY `label`';
+		}
 
-	if (options.orderBy === 'code') {
-		sql += ' ORDER BY `code`';
-	} else if (options.orderBy === 'label') {
-		sql += ' ORDER BY `label`';
-	}
-
-
-	that.db.query(sql, dbFields, function (err, rows) {
-		if (err) return cb(err);
+		const {rows} = await this.db.query(sql, dbFields);
 
 		const counties = [];
 
-		for (let i = 0; rows[i] !== undefined; i ++) {
+		for (let i = 0; rows[i] !== undefined; i++) {
 			counties.push({
-				'iso_3166_1_alpha_3': rows[i].iso_3166_1_alpha_3,
-				'label': rows[i].label,
-				'code': rows[i].code
+				iso_3166_1_alpha_3: rows[i].iso_3166_1_alpha_3,
+				label: rows[i].label,
+				code: rows[i].code,
 			});
 		}
 
 		if (options.includeMunicipalities === true) {
 			const tasks = [];
 
-			for (let i = 0; counties[i] !== undefined; i ++) {
-				tasks.push(function (cb) {
-					that.getMunicipalities({'iso_3166_1_alpha_3': options.iso_3166_1_alpha_3, 'county_label': counties[i].label}, function (err, result) {
-						counties[i].municipalities = result;
-						cb(err);
-					});
+			for (let i = 0; counties[i] !== undefined; i++) {
+				tasks.push(async () => {
+					const result = await this.getMunicipalities({iso_3166_1_alpha_3: options.iso_3166_1_alpha_3, county_label: counties[i].label});
+					counties[i].municipalities = result;
 				});
 			}
 
-			async.parallel(tasks, function (err) {
-				cb(err, counties);
-			});
+			await async.parallel(tasks);
+		}
+
+		return counties;
+	}
+
+	async getCurrencies(options) {
+		const dbFields = [];
+
+		let sql;
+
+		// Just currency codes
+		if (!options || (!options.descriptions && !options.labelLang)) {
+			sql = 'SELECT iso_4217 FROM `geo_currencies`';
 		} else {
-			cb(null, counties);
-		}
-	});
-};
+			if (options.descriptions && !options.labelLang) {
+				sql = 'SELECT * FROM `geo_currencies`';
+			}
 
-Geodata.prototype.getCurrencies = function getCurrencies(options, cb) {
-	const	dbFields	= [],
-		that	= this;
+			if (options.labelLang && !options.descriptions) {
+				sql = 'SELECT c.iso_4217, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencylables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+				dbFields.push(options.labelLang);
+			}
 
-	let	sql;
-
-	// Just currency codes
-	if ( ! options || (! options.descriptions && ! options.labelLang)) {
-		sql	= 'SELECT iso_4217 FROM `geo_currencies`';
-	} else {
-		if (options.descriptions && ! options.labelLang) {
-			sql	= 'SELECT * FROM `geo_currencies`';
+			if (options.descriptions && options.labelLang) {
+				sql = 'SELECT c.iso_4217, c.description, cl.symbol, cl.displayName FROM `geo_currencies` c JOIN `geo_currencylables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+				dbFields.push(options.labelLang);
+			}
 		}
 
-		if (options.labelLang && ! options.descriptions) {
-			sql	= 'SELECT c.iso_4217, cl.symbol, cl.displayName FROM `geo_currencies` c  JOIN `geo_currencylables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
+		await this.ready();
+
+		const {rows} = await this.db.query(sql, dbFields);
+
+		return rows;
+	};
+
+	async getLanguages(options) {
+		const dbFields = [];
+
+		options = options || {};
+
+		if (options.gotIso639_1 === undefined) options.gotIso639_1 = true;
+		if (options.labelLang === undefined) options.labelLang = this.labelLang;
+		if (options.scope === undefined) options.scope = 'individual';
+		if (options.type === undefined) options.type = 'living';
+
+		if (options.iso639_3 !== undefined && options.iso639_3 !== false && !(options.iso639_3 instanceof Array)) {
+			options.iso639_3 = [options.iso639_3];
+		}
+
+		if (options.iso639_1 !== undefined && options.iso639_1 !== false && !(options.iso639_1 instanceof Array)) {
+			options.iso639_1 = [options.iso639_1];
+		}
+
+		let sql = 'SELECT langs.*, labels.label FROM geo_langs langs LEFT JOIN geo_langlabels labels ON labels.langIso639_3 = langs.iso639_3 ';
+
+		if (options.labelLang !== false && options.labelLang !== undefined && options.labelLang !== false) {
+			sql += ' AND labels.labelIso639_3 = ?';
 			dbFields.push(options.labelLang);
 		}
 
-		if (options.descriptions && options.labelLang) {
-			sql	= 'SELECT c.iso_4217, c.description, cl.symbol, cl.displayName FROM `geo_currencies` c JOIN `geo_currencylables` cl on c.iso_4217 = cl.iso_4217 WHERE cl.langIso639_1 = ?';
-			dbFields.push(options.labelLang);
-		}
-	}
+		sql += ' WHERE 1 = 1';
 
-	that.ready(function () {
-		that.db.query(sql, dbFields, cb);
-	});
-};
-
-/**
- * Get list of languages
- *
- * @param obj options -
- * @param func cb(err, result) - result like [{'iso639_3': 'aar', 'iso639_1': 'aa', 'type': 'living', 'scope': 'individual', 'label': 'Afar'}]
- */
-Geodata.prototype.getLanguages = function getLanguages(options, cb) {
-	const	dbFields	= [],
-		that	= this;
-
-	let	sql;
-
-	if (typeof options === 'function') {
-		cb	= options;
-		options	= {};
-	}
-
-	if (options.gotIso639_1	=== undefined) options.gotIso639_1	= true;
-	if (options.labelLang	=== undefined) options.labelLang	= that.labelLang;
-	if (options.scope	=== undefined) options.scope	= 'individual';
-	if (options.type	=== undefined) options.type	= 'living';
-
-	if (options.iso639_3 !== undefined && options.iso639_3 !== false && ! (options.iso639_3 instanceof Array)) {
-		options.iso639_3	= [options.iso639_3];
-	}
-
-	if (options.iso639_1 !== undefined && options.iso639_1 !== false && ! (options.iso639_1 instanceof Array)) {
-		options.iso639_1	= [options.iso639_1];
-	}
-
-	sql = 'SELECT langs.*, labels.label FROM geo_langs langs LEFT JOIN geo_langlabels labels ON labels.langIso639_3 = langs.iso639_3 ';
-
-	if (options.labelLang !== false && options.labelLang !== undefined && options.labelLang !== false) {
-		sql += ' AND labels.labelIso639_3 = ?';
-		dbFields.push(options.labelLang);
-	}
-
-	sql += ' WHERE 1 = 1';
-
-	if (options.scope !== false) {
-		sql += ' AND langs.scope = ?';
-		dbFields.push(options.scope);
-	}
-
-	if (options.type !== false) {
-		sql += ' AND langs.type = ?';
-		dbFields.push(options.type);
-	}
-
-	if (options.gotIso639_1 === false) {
-		sql += ' AND langs.iso639_1 IS NULL';
-	} else if (options.gotIso639_1 === true) {
-		sql += ' AND langs.iso639_1 IS NOT NULL';
-	}
-
-	if (options.iso639_1 !== undefined) {
-		sql += ' AND langs.iso639_1 IN (';
-
-		for (let i = 0; options.iso639_1[i] !== undefined; i ++) {
-			sql += '?,';
-			dbFields.push(options.iso639_1[i]);
+		if (options.scope !== false) {
+			sql += ' AND langs.scope = ?';
+			dbFields.push(options.scope);
 		}
 
-		sql	= sql.substring(0, sql.length - 1) + ')';
-	}
-
-	if (options.iso639_3 !== undefined) {
-		sql += ' AND langs.iso639_3 IN (';
-
-		for (let i = 0; options.iso639_3[i] !== undefined; i ++) {
-			sql += '?,';
-			dbFields.push(options.iso639_3[i]);
+		if (options.type !== false) {
+			sql += ' AND langs.type = ?';
+			dbFields.push(options.type);
 		}
 
-		sql = sql.substring(0, sql.length - 1) + ')';
-	}
+		if (options.gotIso639_1 === false) {
+			sql += ' AND langs.iso639_1 IS NULL';
+		} else if (options.gotIso639_1 === true) {
+			sql += ' AND langs.iso639_1 IS NOT NULL';
+		}
 
-	sql += ' ORDER BY labels.label, langs.iso639_3';
+		if (options.iso639_1 !== undefined) {
+			sql += ' AND langs.iso639_1 IN (';
 
-	this.ready(function () {
-		that.db.query(sql, dbFields, cb);
-	});
-};
+			for (let i = 0; options.iso639_1[i] !== undefined; i++) {
+				sql += '?,';
+				dbFields.push(options.iso639_1[i]);
+			}
 
-/**
- * Get list of municiaplities for country and conty
- *
- * @param obj options {'}
- * @param func cb(err, result) - result like [{'iso_3166_1_alpha_3': 'SWE', 'county_label': 'Stockholms län', 'label': 'Vallentuna', 'code': '0115'}]
- */
-Geodata.prototype.getMunicipalities = function getMunicipalities(options, cb) {
-	const that = this,
-		dbFields = [];
+			sql = sql.substring(0, sql.length - 1) + ')';
+		}
 
-	if ( ! options || ! options.iso_3166_1_alpha_3) return cb(new Error('Required option "iso_3166_1_alpha_3" not set'));
+		if (options.iso639_3 !== undefined) {
+			sql += ' AND langs.iso639_3 IN (';
 
-	let sql = 'SELECT * FROM geo_municipalities WHERE iso_3166_1_alpha_3 = ?';
-	dbFields.push(options.iso_3166_1_alpha_3);
+			for (let i = 0; options.iso639_3[i] !== undefined; i++) {
+				sql += '?,';
+				dbFields.push(options.iso639_3[i]);
+			}
 
-	if (options.county_label) {
-		sql += ' AND county_label = ?';
-		dbFields.push(options.county_label);
-	}
+			sql = sql.substring(0, sql.length - 1) + ')';
+		}
 
-	if (options.orderBy === 'code') {
-		sql += ' ORDER BY code';
-	} else if (options.orderBy === 'label') {
-		sql += ' ORDER BY label';
-	}
+		sql += ' ORDER BY labels.label, langs.iso639_3';
 
-	that.db.query(sql, dbFields, function (err, rows) {
-		if (err) return cb(err);
+		await this.ready();
+		const {rows} = await this.db.query(sql, dbFields);
 
+		return rows;
+	};
+
+	async getMunicipalities(options) {
+		const dbFields = [];
+
+		if (!options || !options.iso_3166_1_alpha_3) throw new Error('Required option "iso_3166_1_alpha_3" not set');
+
+		let sql = 'SELECT * FROM geo_municipalities WHERE iso_3166_1_alpha_3 = ?';
+		dbFields.push(options.iso_3166_1_alpha_3);
+
+		if (options.county_label) {
+			sql += ' AND county_label = ?';
+			dbFields.push(options.county_label);
+		}
+
+		if (options.orderBy === 'code') {
+			sql += ' ORDER BY code';
+		} else if (options.orderBy === 'label') {
+			sql += ' ORDER BY label';
+		}
+
+		const {rows} = await this.db.query(sql, dbFields);
 		let municiaplities = [];
 
-		for (let i = 0; rows[i] !== undefined; i ++) {
+		for (let i = 0; rows[i] !== undefined; i++) {
 			municiaplities.push({
-				'iso_3166_1_alpha_3': rows[i].iso_3166_1_alpha_3,
-				'county_label': rows[i].county_label,
-				'label': rows[i].label,
-				'code': rows[i].code
+				iso_3166_1_alpha_3: rows[i].iso_3166_1_alpha_3,
+				county_label: rows[i].county_label,
+				label: rows[i].label,
+				code: rows[i].code,
 			});
 		}
 
-		return cb(err, municiaplities);
-	});
-};
+		return municiaplities;
+	};
 
-/**
- * Get region with parent regions for territory
- *
- * @param territoryCode int - the iso3166_1_num of the territory
- * @param func cb(err, result) - result like [{'name': 'Something', 'id': '1', 'type': 'subcontinent', 'slug': 'something', 'parent': { 'id' : '2', 'name': 'Parent region' ...} }]
- */
-Geodata.prototype.getRegionForTerritory = function getRegionForTerritory(territoryCode, cb) {
-	const	tasks	= [],
-		that	= this;
+	async getRegionForTerritory(territoryCode) {
+		const tasks = [];
 
-	let	regionsTerritory	= null,
-		regionRegions	= null,
-		regions	= null;
+		let regionsTerritory = null;
+		let regionRegions = null;
+		let regions = null;
 
-	tasks.push(function (cb) {
-		that.db.query('SELECT * FROM geo_regions', function (err, rows) {
-			regions	= rows;
-			cb(err);
+		tasks.push(async () => {
+			const {rows} = await this.db.query('SELECT * FROM geo_regions');
+			regions = rows;
 		});
-	});
 
-	tasks.push(function (cb) {
-		that.db.query('SELECT * FROM geo_regions_territory WHERE contains = ?', [String(territoryCode)], function (err, rows) {
-			regionsTerritory	= rows;
-			cb(err);
+		tasks.push(async () => {
+			const {rows} = await this.db.query('SELECT * FROM geo_regions_territory WHERE contains = ?', [String(territoryCode)]);
+			regionsTerritory = rows;
 		});
-	});
 
-	tasks.push(function (cb) {
-		that.db.query('SELECT * FROM geo_regions_region', function (err, rows) {
-			regionRegions	= rows;
-			cb(err);
+		tasks.push(async () => {
+			const {rows} = await this.db.query('SELECT * FROM geo_regions_region');
+			regionRegions = rows;
 		});
-	});
 
-	async.parallel(tasks, function (err) {
-		const result = [],
-			getParents = function (regionId) {
-				let	rr	= _.find(regionRegions, function (item) { return item.contains === regionId; });
+		await async.parallel(tasks);
 
-				if (rr === undefined) {
-					return false;
-				} else {
-					let	pr	= _.find(regions, function (item) { return item.id == rr.id; }),
-						parentsParent	= getParents(pr.id);
+		const result = [];
+		function getParents(regionId) {
+			const rr = regionRegions.find(function (item) { return item.contains === regionId; });
 
-					if (parentsParent) {
-						pr.parent	= parentsParent;
-					}
+			if (rr === undefined) {
+				return false;
+			} else {
+				const pr = regions.find(function (item) { return item.id === rr.id; });
+				const parentsParent = getParents(pr.id);
 
-					return pr;
+				if (parentsParent) {
+					pr.parent = parentsParent;
 				}
-			};
 
-		if (err) {
-			that.log.warn('larvitgeodata - index.js: Failed to get data: ' + err.message);
-			return cb(err);
-		}
+				return pr;
+			}
+		};
 
 		for (let rt of regionsTerritory) {
-			const	region	= _.find(regions, function (r) { return r.id == rt.id; });
+			const region = regions.find(function (r) { return r.id === rt.id; });
 
 			if (region === undefined) {
 				continue;
 			} else {
-				const	tp	= getParents(region.id);
+				const tp = getParents(region.id);
 
 				if (tp) {
 					region.parent = tp;
@@ -345,72 +278,61 @@ Geodata.prototype.getRegionForTerritory = function getRegionForTerritory(territo
 			}
 		}
 
-		cb(null, result);
-	});
-};
+		return result;
+	};
 
-/**
- * Get list of territories
- *
- * @param obj options - (collate is applied on geo_territories.label and can be utf8mb4_general_ci, utf8mb4_bin, utf8mb4_unicode_ci, utf8mb4_icelandic_ci, utf8mb4_latvian_ci, utf8mb4_romanian_ci, utf8mb4_slovenian_ci, utf8mb4_polish_ci, utf8mb4_estonian_ci, utf8mb4_spanish_ci, utf8mb4_swedish_ci, utf8mb4_turkish_ci, utf8mb4_czech_ci, utf8mb4_danish_ci, utf8mb4_lithuanian_ci, utf8mb4_slovak_ci, utf8mb4_spanish2_ci, utf8mb4_roman_ci, utf8mb4_persian_ci, utf8mb4_esperanto_ci, utf8mb4_hungarian_ci, utf8mb4_sinhala_ci, utf8mb4_german2_ci, utf8mb4_croatian_mysql561_ci, utf8mb4_unicode_520_ci, utf8mb4_vietnamese_ci, utf8mb4_croatian_ci, utf8mb4_myanmar_ci, utf8mb4_thai_520_w2, utf8mb4_general_nopad_ci, utf8mb4_nopad_bin, utf8mb4_unicode_nopad_ci or utf8mb4_unicode_520_nopad_ci)
- * @param func cb(err, result) - result like [{'iso3166_1_num': 4, 'iso3166_1_alpha_3': 'AFG', 'iso3166_1_alpha_2': 'AF', 'label': 'Afghanistan'}]
- */
-Geodata.prototype.getTerritories = function getTerritories(options, cb) {
-	const	dbFields	= [],
-		that	= this;
+	async getTerritories(options) {
+		const dbFields = [];
 
-	let	sql;
+		options = options || {};
 
-	if (typeof options === 'function') {
-		cb	= options;
-		options	= {};
-	}
-
-	if (options.labelLang === undefined) {
-		options.labelLang	= that.labelLang;
-	}
-
-	sql = 'SELECT territories.*, labels.label FROM geo_territories territories LEFT JOIN geo_territorylabels labels ON labels.terIso3166_1_alpha_2 = territories.iso3166_1_alpha_2 ';
-
-	if (options.labelLang !== false && options.labelLang !== undefined) {
-		sql += ' AND labels.labelIso639_3 = ?';
-		dbFields.push(options.labelLang);
-	}
-
-	sql += ' WHERE 1 = 1';
-
-	for (let key of ['iso3166_1_num', 'iso3166_1_alpha_2', 'iso3166_1_alpha_3']) {
-		if (options[key] === undefined) {
-			continue;
-		} else if ( ! (options[key] instanceof Array)) {
-			options[key] = [options[key]];
+		if (options.labelLang === undefined) {
+			options.labelLang = this.labelLang;
 		}
 
-		if (options[key].length === 0) {
-			sql += ' AND 1 = 2';
-			continue;
+		let sql = 'SELECT territories.*, labels.label FROM geo_territories territories LEFT JOIN geo_territorylabels labels ON labels.terIso3166_1_alpha_2 = territories.iso3166_1_alpha_2 ';
+
+		if (options.labelLang !== false && options.labelLang !== undefined) {
+			sql += ' AND labels.labelIso639_3 = ?';
+			dbFields.push(options.labelLang);
 		}
 
-		sql += ' AND territories.' + key + ' IN (';
-		for (let i = 0; options[key][i] !== undefined; i ++) {
-			sql += '?,';
-			dbFields.push(options[key][i]);
+		sql += ' WHERE 1 = 1';
+
+		for (let key of ['iso3166_1_num', 'iso3166_1_alpha_2', 'iso3166_1_alpha_3']) {
+			if (options[key] === undefined) {
+				continue;
+			} else if (!(options[key] instanceof Array)) {
+				options[key] = [options[key]];
+			}
+
+			if (options[key].length === 0) {
+				sql += ' AND 1 = 2';
+				continue;
+			}
+
+			sql += ' AND territories.' + key + ' IN (';
+			for (let i = 0; options[key][i] !== undefined; i++) {
+				sql += '?,';
+				dbFields.push(options[key][i]);
+			}
+
+			sql = sql.substring(0, sql.length - 1) + ')';
 		}
 
-		sql	= sql.substring(0, sql.length - 1) + ')';
-	}
+		if (options.collate && options.collate !== '') {
+			sql += ' ORDER BY labels.label COLLATE ?, territories.iso3166_1_alpha_2';
+			dbFields.push(options.collate);
 
-	if (options.collate && options.collate !== '') {
-		sql += ' ORDER BY labels.label COLLATE ?, territories.iso3166_1_alpha_2';
-		dbFields.push(options.collate);
+		} else {
+			sql += ' ORDER BY labels.label, territories.iso3166_1_alpha_2';
+		}
 
-	} else {
-		sql += ' ORDER BY labels.label, territories.iso3166_1_alpha_2';
-	}
+		await this.ready();
+		const {rows} = await this.db.query(sql, dbFields);
 
-	this.ready(function () {
-		that.db.query(sql, dbFields, cb);
-	});
-};
+		return rows;
+	};
+}
 
 exports = module.exports = Geodata;
