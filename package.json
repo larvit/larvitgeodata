@@ -1,6 +1,6 @@
 {
   "name": "larvitgeodata",
-  "version": "4.0.18",
+  "version": "4.0.19",
   "contributors": [
     {
       "name": "lipis",
@@ -11,7 +11,7 @@
   "dependencies": {
     "async": "^3.2.3",
     "larvitdb": "^3.2.0",
-    "larvitdbmigration": "^6.1.0",
+    "larvitdbmigration": "^7.0.0",
     "larvitutils": "^5.0.0"
   },
   "devDependencies": {
