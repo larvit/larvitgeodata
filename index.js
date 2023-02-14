@@ -32,7 +32,7 @@ class Geodata {
 		dbMigrationOptions.dbType = this.options.dbType || 'mariadb';
 		dbMigrationOptions.dbDriver = this.db;
 		dbMigrationOptions.tableName = this.options.tableName || 'geo_db_version';
-		dbMigrationOptions.migrationScriptsPath = this.options.migrationScriptsPath || __dirname + '/dbmigration';
+		dbMigrationOptions.migrationScriptPath = this.options.migrationScriptPath || __dirname + '/dbmigration';
 		dbMigrationOptions.log = this.log;
 
 		const dbMigration = new DbMigration(dbMigrationOptions);
