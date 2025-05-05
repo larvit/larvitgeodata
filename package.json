@@ -1,6 +1,6 @@
 {
   "name": "larvitgeodata",
-  "version": "4.0.55",
+  "version": "4.0.56",
   "contributors": [
     {
       "name": "lipis",
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "eslint": "8.57.1",
-    "mocha": "11.1.0",
+    "mocha": "11.2.2",
     "nyc": "17.1.0"
   },
   "description": "Geo data, primarily ISO territories, languages etc. Data fetched mostly from CLDR.",
