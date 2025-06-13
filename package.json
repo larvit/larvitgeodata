@@ -1,6 +1,6 @@
 {
   "name": "larvitgeodata",
-  "version": "4.0.59",
+  "version": "4.0.60",
   "contributors": [
     {
       "name": "lipis",
@@ -15,7 +15,7 @@
     "larvitutils": "^5.0.0"
   },
   "devDependencies": {
-    "eslint": "8.57.1",
+    "eslint": "9.29.0",
     "mocha": "11.6.0",
     "nyc": "17.1.0"
   },
